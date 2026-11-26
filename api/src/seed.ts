@@ -15,6 +15,7 @@ import { COMISION_INICIAL, type ConfigCooperativa, type Rol, type TemaCooperativ
 import { sequelize } from './db';
 import { ComisionSrv, Cooperativa, RolUsuario, Socio, Usuario } from './models';
 import { runInCooperativa, runUnscoped } from './lib/context';
+import { sellarPendientes } from './lib/integridad';
 import { hashPassword, randomToken, verifyPassword } from './lib/security';
 import { callesInventadas } from './seed/calles-inventadas';
 import { hoy } from './lib/tarifas';
@@ -265,6 +266,13 @@ async function main() {
 
     const balance = await cargarBalance(coop.id, { semilla: seed.padron.opciones.semilla, generacionPropia: seed.config.energia?.generacion != null });
     if (balance) created.push(`balance de energía de ${seed.nombreCorto} (${balance} meses)`);
+
+    // El historial de la demo se carga directo en la base: se sella al final, así la cadena de integridad
+    // arranca completa y la verificación da en orden.
+    const sellado = await sellarPendientes(coop.id);
+    if (sellado.comprobantes + sellado.pagos + sellado.auditoria > 0) {
+      created.push(`huellas de integridad de ${seed.nombreCorto} (${sellado.comprobantes} comprobantes, ${sellado.pagos} recibos, ${sellado.auditoria} registros)`);
+    }
   }
 
   // El historial se arma mes por mes (borrador → emitida → paga): cada paso deja una versión vieja

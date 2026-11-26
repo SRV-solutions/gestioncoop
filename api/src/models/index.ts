@@ -5,6 +5,7 @@ import { BeneficiarioSepelio, Conexion, Medidor, Plan, Ruta, ServicioConexionMod
 import { Comprobante, ComprobanteRenglon, Notificacion, Numerador, ProcesoFacturacionModel } from './facturacion';
 import { Lectura, LecturaFoto, Periodo } from './lecturas';
 import { CorteProgramadoModel, IntentoPago, PasarelaSimulada, Reclamo, ReclamoEvento, ReclamoFoto } from './portal';
+import { Alerta, ConfigFiscal, IntentoAccesoSocio, VerificacionIntegridad } from './seguridad';
 import { BalanceEnergia } from './tablero';
 import { Concepto, CuadroTarifario, Escalon } from './tarifas';
 
@@ -16,6 +17,7 @@ export * from './facturacion';
 export * from './caja';
 export * from './portal';
 export * from './tablero';
+export * from './seguridad';
 
 /* ───────────────────────── Aislamiento por cooperativa ─────────────────────────
  * Todo modelo de negocio nuevo (con cooperativa_id) se agrega a esta lista.
@@ -56,5 +58,9 @@ export const SCOPED_MODELS = [
   BalanceEnergia,
   CooperativaImagen,
   ComisionSrv,
+  ConfigFiscal,
+  VerificacionIntegridad,
+  Alerta,
+  IntentoAccesoSocio,
 ] as const;
 for (const model of SCOPED_MODELS) scopeByCooperativa(model);

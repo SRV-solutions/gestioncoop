@@ -20,6 +20,7 @@ import { api, ApiError, errorMessage, pedirArchivo } from '../../lib/api';
 import { cn } from '../../lib/cn';
 import { achicarLogo } from '../../lib/foto';
 import { Badge, Button, Card, Check, ErrorState, Field, FormAlert, PageHeader, Skeleton } from '../../components/ui';
+import { FacturaElectronica } from './FacturaElectronica';
 
 const hoyLocal = () => {
   const d = new Date();
@@ -53,6 +54,7 @@ export function CooperativaSrvPage() {
         <div className="space-y-6">
           <Comision cooperativaId={d.id} comision={d.comision} />
           <Factura cooperativaId={d.id} diseno={d.factura} />
+          <FacturaElectronica cooperativaId={d.id} />
         </div>
       )}
     </>

@@ -86,6 +86,9 @@ export async function iniciarAlmacen(id: number): Promise<void> {
     abierta = null;
     estado = { pendientes: 0, rechazadas: 0, enviando: false, version: 0 };
   }
+  // Le pide al teléfono que no borre estos datos aunque se quede sin espacio (sin esto, el navegador
+  // puede vaciar el almacén de una página para hacer lugar, con lecturas sin mandar adentro).
+  void navigator.storage?.persist?.().catch(() => false);
   await contar();
   void sincronizar();
 }

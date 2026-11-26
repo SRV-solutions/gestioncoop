@@ -45,6 +45,7 @@ const TarifasPage = lazy(() => import('./features/tarifas/TarifasPage').then((m)
 const MapaPage = lazy(() => import('./features/mapa/MapaPage').then((m) => ({ default: m.MapaPage })));
 const CooperativaPage = lazy(() => import('./features/cooperativa/CooperativaPage').then((m) => ({ default: m.CooperativaPage })));
 const CooperativaSrvPage = lazy(() => import('./features/superadmin/CooperativaSrvPage').then((m) => ({ default: m.CooperativaSrvPage })));
+const IntegridadPage = lazy(() => import('./features/integridad/IntegridadPage').then((m) => ({ default: m.IntegridadPage })));
 const CooperativasPage = lazy(() => import('./features/superadmin/CooperativasPage').then((m) => ({ default: m.CooperativasPage })));
 
 /** Sin sesión, al ingreso. Mientras se averigua, pantalla de carga (nunca un parpadeo del login). */
@@ -158,6 +159,7 @@ export function App() {
         <Route path="/admin" element={<Navigate to="/admin/usuarios" replace />} />
         <Route path="/admin/usuarios" element={area(['admin'], <UsersPage />)} />
         <Route path="/cooperativa" element={area(['gerencia', 'admin'], <CooperativaPage />)} />
+        <Route path="/integridad" element={area(['admin', 'gerencia'], <IntegridadPage />)} />
         <Route path="/superadmin" element={area(['superadmin'], <CooperativasPage />)} />
         <Route path="/superadmin/cooperativas/:id" element={area(['superadmin'], <CooperativaSrvPage />)} />
       </Route>

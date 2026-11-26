@@ -14,7 +14,8 @@ export const CONTENIDO = 'contenido';
 const TITULOS: [RegExp, string][] = [
   [/^\/login/, 'Ingresar'],
   [/^\/cooperativa/, 'Cooperativa'],
-  [/^\/superadmin\/cooperativas\//, 'Comisión y factura'],
+  [/^\/superadmin\/cooperativas\//, 'Comisión, factura y ARCA'],
+  [/^\/integridad/, 'Integridad de los datos'],
   [/^\/pagar\/resultado/, 'Resultado del pago'],
   [/^\/pagar/, 'Pagar una factura'],
   [/^\/pasarela/, 'Pago de prueba'],

@@ -2,7 +2,7 @@
 // mostrador y A4 para la común. Se arma al pedirlo, siempre con lo que el cobro tiene guardado.
 import PDFDocument from 'pdfkit';
 import { Cooperativa } from '../models';
-import { proveedorFiscal } from '../proveedores/fiscal';
+import { proveedorFiscalActual } from './fiscal';
 import { detalleRecibo } from './caja';
 import { requireCooperativaId } from './tenant';
 import {
@@ -257,9 +257,14 @@ export function pdfRecibo(d: DatosRecibo, formato: FormatoRecibo): Promise<Buffe
 export async function reciboPdf(id: number, formato: FormatoRecibo): Promise<{ pdf: Buffer; nombre: string; socioId: number | null } | null> {
   const recibo = await detalleRecibo(id);
   if (!recibo) return null;
-  const coop = (await Cooperativa.findByPk(requireCooperativaId()))!;
+  const [coop, proveedor] = await Promise.all([Cooperativa.findByPk(requireCooperativaId()), proveedorFiscalActual()]);
   const pdf = await pdfRecibo(
-    { cooperativa: { nombre: coop.nombre, nombreCorto: coop.nombreCorto, cuit: coop.cuit, config: coop.configJson, color: coop.temaJson.colores.primario }, recibo, simulado: proveedorFiscal.simulado },
+    {
+      cooperativa: { nombre: coop!.nombre, nombreCorto: coop!.nombreCorto, cuit: coop!.cuit, config: coop!.configJson, color: coop!.temaJson.colores.primario },
+      recibo,
+      // El recibo no pasa por ARCA: dice «demo» mientras la cooperativa no facture en producción.
+      simulado: proveedor.simulado,
+    },
     formato,
   );
   return { pdf, nombre: `${recibo.referencia.replace(/[^\w-]+/g, '-')}.pdf`, socioId: recibo.socio?.id ?? null };

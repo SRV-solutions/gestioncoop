@@ -173,6 +173,8 @@ export interface ComprobanteDetalle extends ComprobanteListado {
   relacionado: { id: number; referencia: string } | null;
   cae: string | null;
   caeVence: string | null;
+  /** Quién autorizó el CAE: `simulado` (demo), `homologacion` (pruebas de ARCA) o `produccion` (válido). */
+  caeAmbiente: 'simulado' | 'homologacion' | 'produccion' | null;
   codigoDeBarras: string | null;
   /** Cobros aplicados a esta factura (los anulados también, marcados). */
   pagos: { id: number; referencia: string; cobradoEl: string; medio: MedioPago; estado: EstadoPago; importe: string }[];

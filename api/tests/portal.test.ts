@@ -25,6 +25,7 @@ import {
 import { sequelize } from '../src/db';
 import { runInCooperativa } from '../src/lib/context';
 import { explicarFactura } from '../src/lib/explicar';
+import { sellarPendientes, verificarIntegridad } from '../src/lib/integridad';
 import { hoy } from '../src/lib/tarifas';
 import { Auditoria, IntentoPago, Notificacion, Pago } from '../src/models';
 import { pagosSimulados } from '../src/proveedores/pagos';
@@ -70,6 +71,12 @@ const pagar = async (ids: number[], agente: Agente = socio): Promise<IntentoCrea
   return res.body.data;
 };
 const factura = async (id: number) => (await sql<{ estado: string; saldo: string; total: string }>(`SELECT estado, saldo, total FROM comprobantes WHERE id = :id`, { id }))[0]!;
+/** Recibos a los que estas pruebas les sacan a mano lo que pagaban, para cargarle al socio una deuda nueva. */
+const tocadosAMano = new Set<number>();
+const sacarCobros = async (comprobanteId: number) => {
+  for (const r of await sql<{ pago_id: number }>(`SELECT pago_id FROM pago_aplicaciones WHERE comprobante_id = :id`, { id: comprobanteId })) tocadosAMano.add(r.pago_id);
+  await sequelize.query(`DELETE FROM pago_aplicaciones WHERE comprobante_id = :id`, { replacements: { id: comprobanteId } });
+};
 
 beforeAll(async () => {
   w = await resetWorld();
@@ -89,6 +96,8 @@ beforeAll(async () => {
     await cargarFacturas(coop.id, { semilla });
     await cargarPagos(coop.id, { semilla });
     await cargarReclamos(coop.id, { semilla, hoy: HOY, cantidad: 20 });
+    // El historial de prueba entra directo a la base: se sella, como en el seed.
+    await sellarPendientes(coop.id);
   }
   socio = await loginAs('socio@a.test');
   socioB = await loginAs('socio@b.test');
@@ -176,6 +185,30 @@ describe('ingreso del socio con los datos de su factura', () => {
     expect(otra.status).toBe(200);
     expect(otra.body.data.user.id).toBe(res.body.data.user.id);
     expect(await runInCooperativa(w.a.id, () => Auditoria.count({ where: { accion: 'crear_cuenta_socio' } }))).toBe(1);
+  });
+
+  it('cinco fallos seguidos con un mismo código de socio pausan el ingreso con ese código, aunque se cambie de conexión', async () => {
+    const [otro] = await sql<typeof datos>(
+      `SELECT s.nro_doc AS documento, s.numero, cx.numero AS conexion FROM socios s JOIN conexiones cx ON cx.socio_id = s.id
+       WHERE s.cooperativa_id = :a AND s.estado = 'activo' AND s.tipo_doc = 'DNI' AND s.numero <> :n ORDER BY s.id LIMIT 1`,
+      { n: datos.numero },
+    );
+    const bien = { socio: otro!.numero, conexion: otro!.conexion, documento: otro!.documento };
+    for (let i = 0; i < 5; i++) expect((await entrar({ ...bien, documento: String(10_000_000 + i) })).status).toBe(401);
+    // Ahora, ni con los datos correctos: el código quedó en pausa.
+    const pausado = await entrar(bien);
+    expect(pausado.status).toBe(429);
+    expect(pausado.body.error).toMatchObject({ code: 'ingreso_pausado' });
+    expect(pausado.body.error.message).toMatch(/15 minutos/);
+    expect(await runInCooperativa(w.a.id, () => Auditoria.count({ where: { accion: 'pausar_ingreso_socio', entidadId: String(otro!.numero) } }))).toBe(1);
+    // Los demás socios siguen entrando con normalidad.
+    expect((await entrar({ socio: datos.numero, conexion: datos.conexion, documento: datos.documento })).status).toBe(200);
+    // Pasada la pausa, entra; y el contador vuelve a cero.
+    await sequelize.query(`UPDATE intentos_acceso_socio SET bloqueado_hasta = now() - interval '1 minute' WHERE cooperativa_id = :a AND clave = :clave`, {
+      replacements: { a: w.a.id, clave: String(otro!.numero) },
+    });
+    expect((await entrar(bien)).status).toBe(200);
+    expect((await sql<{ n: string }>(`SELECT count(*) AS n FROM intentos_acceso_socio WHERE cooperativa_id = :a AND clave = :clave`, { clave: String(otro!.numero) }))[0]!.n).toBe('0');
   });
 
   it('sale y entra con otra cuenta desde el mismo dispositivo', async () => {
@@ -334,7 +367,7 @@ describe('pago online', () => {
   it('si el aviso del banco no llegó, al volver se le consulta el estado y se acredita igual', async () => {
     // Le cargamos una deuda nueva al socio: otra factura impaga de las de su historial.
     const [f] = await sql<{ id: number; total: string }>(`SELECT id, total FROM comprobantes WHERE socio_id = :s AND estado = 'pagado' AND total > 0 ORDER BY id LIMIT 1`, { s: socioA.id });
-    await sequelize.query(`DELETE FROM pago_aplicaciones WHERE comprobante_id = :id`, { replacements: { id: f!.id } });
+    await sacarCobros(f!.id);
     await sequelize.query(`UPDATE comprobantes SET estado = 'emitido', saldo = total WHERE id = :id`, { replacements: { id: f!.id } });
     const c = await pagar([f!.id]);
     // El banco aprueba pero el aviso se pierde.
@@ -346,7 +379,7 @@ describe('pago online', () => {
 
   it('si la factura se pagó en la caja mientras pagaba online, lo cobrado queda a su favor', async () => {
     const [f] = await sql<{ id: number; total: string }>(`SELECT id, total FROM comprobantes WHERE socio_id = :s AND estado = 'pagado' AND total > 0 ORDER BY id LIMIT 1 OFFSET 1`, { s: socioA.id });
-    await sequelize.query(`DELETE FROM pago_aplicaciones WHERE comprobante_id = :id`, { replacements: { id: f!.id } });
+    await sacarCobros(f!.id);
     await sequelize.query(`UPDATE comprobantes SET estado = 'emitido', saldo = total WHERE id = :id`, { replacements: { id: f!.id } });
     const c = await pagar([f!.id]);
     expect((await caja.post('/api/v1/caja/abrir').send({ fondoInicial: '0' })).status).toBe(201);
@@ -361,7 +394,7 @@ describe('pago online', () => {
 
   it('un intento que pasó su vigencia vence y el banco ya no lo acepta', async () => {
     const [f] = await sql<{ id: number }>(`SELECT id FROM comprobantes WHERE socio_id = :s AND estado = 'pagado' AND total > 0 ORDER BY id LIMIT 1 OFFSET 2`, { s: socioA.id });
-    await sequelize.query(`DELETE FROM pago_aplicaciones WHERE comprobante_id = :id`, { replacements: { id: f!.id } });
+    await sacarCobros(f!.id);
     await sequelize.query(`UPDATE comprobantes SET estado = 'emitido', saldo = total WHERE id = :id`, { replacements: { id: f!.id } });
     const c = await pagar([f!.id]);
     await runInCooperativa(w.a.id, () => IntentoPago.update({ venceEl: new Date(Date.now() - 60_000) }, { where: { id: c.intentoId } }));
@@ -520,5 +553,16 @@ describe('aislamiento', () => {
     const [f] = await sql<{ id: number; vence_el: string; total: string }>(`SELECT id, to_char(vence_el, 'YYYY-MM-DD') AS vence_el, total FROM comprobantes WHERE cooperativa_id = :a AND estado = 'emitido' LIMIT 1`);
     const codigo = codigoDeBarras({ cooperativaId: w.a.id, id: f!.id, venceEl: f!.vence_el, total: f!.total });
     expect((await request(app).get(`/api/v1/publico/pagar/${codigo}`).set('Host', 'coop-b.coopgestion.test')).status).toBe(404);
+  });
+});
+
+describe('integridad', () => {
+  it('cada pago online de estas pruebas quedó encadenado, y lo único que marca es lo que se tocó a mano en la base', async () => {
+    expect(tocadosAMano.size).toBe(3);
+    const a = await runInCooperativa(w.a.id, verificarIntegridad);
+    // Los recibos a los que se les sacó lo que pagaban: la huella ya no coincide y el importe no cierra.
+    expect(a.problemas.every((p) => p.libro === 'cobros' && ['huella_no_coincide', 'cobro_no_cierra'].includes(p.tipo))).toBe(true);
+    expect(new Set(a.problemas.map((p) => p.entidadId))).toEqual(tocadosAMano);
+    expect((await runInCooperativa(w.b.id, verificarIntegridad)).problemas).toEqual([]);
   });
 });

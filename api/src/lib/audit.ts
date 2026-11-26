@@ -1,6 +1,7 @@
 import type { Transaction } from 'sequelize';
 import { Auditoria } from '../models';
 import { currentContext, runUnscoped } from './context';
+import { sellarAuditoria } from './integridad';
 
 interface AuditEntry {
   /** Qué pasó: `ingresar`, `crear`, `anular_cobro`... */
@@ -18,11 +19,12 @@ interface AuditEntry {
 
 /**
  * Deja constancia de quién hizo qué y cuándo. Obligatorio en todo lo que toca dinero,
- * tarifas o padrón (SPEC 6.11).
+ * tarifas o padrón (SPEC 6.11). Apenas se confirma la operación, el registro se encadena con el
+ * anterior (ver lib/integridad): si después alguien lo cambia o lo borra en la base, se detecta.
  */
 export async function writeAudit(entry: AuditEntry): Promise<void> {
   const ctx = currentContext();
-  await runUnscoped(() =>
+  const fila = await runUnscoped(() =>
     Auditoria.create(
       {
         cooperativaId: entry.cooperativaId !== undefined ? entry.cooperativaId : (ctx?.cooperativaId ?? null),
@@ -37,4 +39,8 @@ export async function writeAudit(entry: AuditEntry): Promise<void> {
       { transaction: entry.transaction },
     ),
   );
+  // Si falla el sellado, la operación ya está hecha: queda sin sellar y la verificación lo va a marcar.
+  const sellar = () => sellarAuditoria(fila.id, fila.cooperativaId).catch((err: unknown) => console.error(`[INTEGRIDAD] no se pudo sellar el registro ${fila.id}`, err));
+  if (entry.transaction) entry.transaction.afterCommit(() => sellar());
+  else await sellar();
 }

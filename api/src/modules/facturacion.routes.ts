@@ -44,7 +44,9 @@ import { pdfComprobante } from '../lib/pdf-comprobante';
 import { cargarParametros, hoy } from '../lib/tarifas';
 import { requireCooperativaId } from '../lib/tenant';
 import { requireRole } from '../middlewares/auth';
-import { proveedorFiscal } from '../proveedores/fiscal';
+import { urlQrFiscal } from '../lib/arca/qr';
+import { configFiscalActual, proveedorFiscalActual } from '../lib/fiscal';
+import { sellarComprobantes } from '../lib/integridad';
 
 export const facturacionRouter = Router();
 // Ver: quienes facturan o deciden. Cerrar, calcular, emitir y anular: facturación y administración.
@@ -254,10 +256,16 @@ facturacionRouter.post('/emitir', quienFactura, async (_req, res) => {
   const parametros = await cargarParametros();
   const fechaEmision = hoy();
   const proceso = await lanzarProceso('emision', { anio, mes }, async (avanzar) => {
-    const { emitidas } = await emitirBorradores({ anio, mes, fechaEmision, diasVencimiento: parametros.diasVencimiento, alAvanzar: avanzar });
-    await Periodo.update({ estado: 'emitido' }, { where: { anio, mes, estado: 'prefacturado' } });
+    const { emitidas, rechazadas } = await emitirBorradores({ anio, mes, fechaEmision, diasVencimiento: parametros.diasVencimiento, alAvanzar: avanzar });
+    // Si ARCA rechazó alguna, el mes sigue abierto: se corrige, se vuelve a calcular y se emite lo que falta.
+    if (rechazadas === 0) await Periodo.update({ estado: 'emitido' }, { where: { anio, mes, estado: 'prefacturado' } });
     const avisos = await avisarFacturas(anio, mes);
-    await writeAudit({ accion: 'emitir', entidad: 'periodo', entidadId: periodo.id, despues: { anio, mes, emitidas, avisos, fechaEmision } });
+    await writeAudit({ accion: rechazadas ? 'emitir_parcial' : 'emitir', entidad: 'periodo', entidadId: periodo.id, despues: { anio, mes, emitidas, rechazadas, avisos, fechaEmision } });
+    if (rechazadas > 0) {
+      throw conflict(
+        `Se emitieron ${emitidas}. ARCA rechazó ${rechazadas === 1 ? '1 factura' : `${rechazadas} facturas`}: quedaron como pre-facturas con el motivo. Corregí los datos, volvé a calcular y emití lo que falta.`,
+      );
+    }
   });
   ok(res, toProceso(proceso), 202);
 });
@@ -478,6 +486,7 @@ async function detalleDe(id: number): Promise<{ detalle: ComprobanteDetalle; com
       : null,
     cae: comprobante.cae,
     caeVence: comprobante.caeVence,
+    caeAmbiente: comprobante.caeAmbiente ?? null,
     codigoDeBarras:
       comprobante.tipo === 'factura' && comprobante.venceEl ? codigoDeBarras({ cooperativaId: comprobante.cooperativaId, id: comprobante.id, venceEl: comprobante.venceEl, total: listado.total }) : null,
     pagos: pagos.map((p) => ({
@@ -517,7 +526,7 @@ export async function pdfDeComprobante(id: number, opciones: { modelo?: ModeloFa
   const { detalle, comprobante } = r;
   const cooperativaId = requireCooperativaId();
   const n = comprobante.anio * 12 + comprobante.mes;
-  const [coop, imagenes, historial] = await Promise.all([
+  const [coop, imagenes, historial, fiscal] = await Promise.all([
     Cooperativa.findByPk(cooperativaId),
     CooperativaImagen.findAll({ attributes: ['tipo', 'contenido'] }),
     comprobante.servicioConexionId === null || detalle.calculo?.consumo == null
@@ -530,8 +539,26 @@ export async function pdfDeComprobante(id: number, opciones: { modelo?: ModeloFa
            GROUP BY p.anio, p.mes ORDER BY p.anio, p.mes`,
           { replacements: { cooperativaId, servicioConexionId: comprobante.servicioConexionId, n }, type: QueryTypes.SELECT },
         ),
+    configFiscalActual(),
   ]);
   const modelo = opciones.modelo ?? coop!.configJson.factura ?? MODELO_FACTURA_BASE;
+  // El QR de ARCA va en todo comprobante autorizado por ARCA (en homologación también, para probarlo).
+  const ambienteFiscal = comprobante.caeAmbiente ?? 'simulado';
+  const qrFiscal =
+    comprobante.cae && comprobante.numero !== null && comprobante.emitidoEl && comprobante.tipo !== 'recibo' && ambienteFiscal !== 'simulado'
+      ? urlQrFiscal({
+          fecha: comprobante.emitidoEl,
+          cuit: fiscal?.cuit ?? coop!.cuit,
+          puntoVenta: comprobante.puntoVenta,
+          tipo: comprobante.tipo,
+          letra: comprobante.letra,
+          numero: comprobante.numero,
+          total: comprobante.total,
+          tipoDoc: detalle.titular.tipoDoc,
+          nroDoc: detalle.titular.nroDoc,
+          cae: comprobante.cae,
+        })
+      : null;
   // El logo propio de la factura; si no hay, el isotipo de la app.
   const imagen = (tipo: string) => imagenes.find((i) => i.tipo === tipo)?.contenido;
   const logo = modelo.conLogo ? ([imagen('factura'), imagen('isotipo')].find(sirveParaPdf) ?? null) : null;
@@ -540,7 +567,8 @@ export async function pdfDeComprobante(id: number, opciones: { modelo?: ModeloFa
     comprobante: detalle,
     historial: historial.map((h) => ({ anio: h.anio, mes: h.mes, consumo: Number(h.consumo), estimada: h.estimada })),
     urlPago: detalle.codigoDeBarras ? `${config.appUrl}/pagar/${detalle.codigoDeBarras}` : null,
-    simulado: proveedorFiscal.simulado,
+    ambienteFiscal,
+    qrFiscal,
   });
   return { pdf, nombre: `${detalle.referencia.replace(/[^\w-]+/g, '-')}.pdf` };
 }
@@ -577,7 +605,6 @@ facturacionRouter.post('/comprobantes/:id/nota-credito', quienFactura, async (re
     if (factura.estado === 'pagado' || !new Decimal(factura.saldo).eq(factura.total)) throw conflict('Esa factura ya tiene pagos: no se puede anular desde acá');
 
     const numero = await reservarNumeros({ tipo: 'nota_credito', letra: factura.letra, puntoVenta: factura.puntoVenta }, 1, transaction);
-    const autorizacion = (await proveedorFiscal.autorizar([{ id: 0, tipo: 'nota_credito', letra: factura.letra, puntoVenta: factura.puntoVenta, numero, total: factura.total, fecha }])).get(0);
     const creada = await Comprobante.create(
       {
         tipo: 'nota_credito',
@@ -600,8 +627,6 @@ facturacionRouter.post('/comprobantes/:id/nota-credito', quienFactura, async (re
         estimada: factura.estimada,
         origenId: factura.id,
         motivo,
-        cae: autorizacion?.cae ?? null,
-        caeVence: autorizacion?.caeVence ?? null,
         snapshotJson: factura.snapshotJson,
         creadoPor: req.auth!.userId,
       },
@@ -615,6 +640,16 @@ facturacionRouter.post('/comprobantes/:id/nota-credito', quienFactura, async (re
       }),
       { transaction },
     );
+    // Con el detalle ya cargado, se pide el CAE. Si ARCA la rechaza no queda nada: ni la nota ni el número.
+    const proveedor = await proveedorFiscalActual(transaction);
+    const { autorizados, rechazo } = await proveedor.autorizar(
+      [{ id: creada.id, tipo: 'nota_credito', letra: factura.letra, puntoVenta: factura.puntoVenta, numero, total: factura.total, fecha, venceEl: null }],
+      transaction,
+    );
+    const autorizacion = autorizados.get(creada.id);
+    if (!autorizacion) throw conflict(rechazo?.motivo ?? 'ARCA no autorizó la nota de crédito. Probá de nuevo en un momento.');
+    await creada.update({ cae: autorizacion.cae, caeVence: autorizacion.caeVence, caeAmbiente: autorizacion.ambiente }, { transaction });
+    await sellarComprobantes([creada.id], transaction);
     const antes = { estado: factura.estado, saldo: factura.saldo };
     await factura.update({ estado: 'anulado', saldo: '0' }, { transaction });
     await writeAudit({

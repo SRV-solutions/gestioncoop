@@ -33,10 +33,13 @@ import {
 import { sequelize } from '../db';
 import { Cooperativa, Periodo, Plan, ProcesoFacturacionModel } from '../models';
 import { calcularFactura, ErrorDeCalculo, mesCompleto, sumarDias } from '../motor';
-import { proveedorFiscal } from '../proveedores/fiscal';
+import type { ComprobanteAAutorizar } from '../proveedores/fiscal';
 import { proveedorNotificaciones, type AvisoAlSocio } from '../proveedores/notificaciones';
+import { ErrorArca } from './arca/transporte';
 import { currentContext, requestContext } from './context';
 import { conflict, HttpError } from './errors';
+import { proveedorFiscalActual } from './fiscal';
+import { sellarComprobantes } from './integridad';
 import { cargarConceptos, cargarCuadros, parametrosDe } from './tarifas';
 import { requireCooperativaId } from './tenant';
 
@@ -520,11 +523,14 @@ export interface OpcionesEmision {
 }
 
 /**
- * Emite las pre-facturas del mes: les pone número, fecha, vencimiento y deja la deuda cargada.
+ * Emite las pre-facturas del mes: les pone número, fecha, vencimiento y CAE, y deja la deuda cargada.
  * Va por lotes, cada uno en su transacción: si se corta, lo emitido queda emitido y al reintentar
  * sigue desde donde quedó, sin saltear ni repetir números.
+ *
+ * Si ARCA rechaza una factura, las anteriores del lote quedan emitidas (ya están autorizadas), esa
+ * vuelve a pre-factura con el motivo para corregirla, y la numeración se ajusta para seguir sin huecos.
  */
-export async function emitirBorradores(o: OpcionesEmision): Promise<{ emitidas: number }> {
+export async function emitirBorradores(o: OpcionesEmision): Promise<{ emitidas: number; rechazadas: number }> {
   const cooperativaId = requireCooperativaId();
   const base = { cooperativaId, anio: o.anio, mes: o.mes };
   const venceEl = sumarDias(o.fechaEmision, o.diasVencimiento);
@@ -533,7 +539,9 @@ export async function emitirBorradores(o: OpcionesEmision): Promise<{ emitidas: 
     base,
   )) as [{ n: string }];
   const total = Number(n);
+  const proveedor = await proveedorFiscalActual();
   let emitidas = 0;
+  let rechazadas = 0;
   await o.alAvanzar?.(0, total);
 
   for (;;) {
@@ -545,38 +553,79 @@ export async function emitirBorradores(o: OpcionesEmision): Promise<{ emitidas: 
         base,
         transaction,
       );
-      if (lote.length === 0) return 0;
+      if (lote.length === 0) return null;
 
-      const numerados: { id: number; tipo: TipoComprobante; letra: string; puntoVenta: number; numero: number; total: string; fecha: string }[] = [];
+      const numerados: ComprobanteAAutorizar[] = [];
+      const talonarios: { letra: string; puntoVenta: number; primero: number; ids: number[] }[] = [];
       const claves = [...new Set(lote.map((c) => `${c.letra}|${c.punto_venta}`))].sort();
       for (const clave of claves) {
         const [letra, pv] = clave.split('|') as [string, string];
         const grupo = lote.filter((c) => c.letra === letra && c.punto_venta === Number(pv));
         const primero = await reservarNumeros({ tipo: 'factura', letra, puntoVenta: Number(pv) }, grupo.length, transaction);
-        grupo.forEach((c, i) => numerados.push({ id: c.id, tipo: 'factura', letra, puntoVenta: Number(pv), numero: primero + i, total: c.total, fecha: o.fechaEmision }));
+        talonarios.push({ letra, puntoVenta: Number(pv), primero, ids: grupo.map((c) => c.id) });
+        grupo.forEach((c, i) =>
+          numerados.push({ id: c.id, tipo: 'factura', letra, puntoVenta: Number(pv), numero: primero + i, total: c.total, fecha: o.fechaEmision, venceEl }),
+        );
       }
-      const autorizaciones = await proveedorFiscal.autorizar(numerados);
-      await ejecutar(
-        `UPDATE comprobantes c
-         SET numero = x.numero, emitido_el = CAST($fecha AS date), vence_el = CAST($vence AS date), saldo = GREATEST(c.total, 0),
-             estado = CASE WHEN c.total > 0 THEN 'emitido' ELSE 'pagado' END, cae = x.cae, cae_vence = CAST(x.cae_vence AS date), actualizado_el = now()
-         FROM jsonb_to_recordset(CAST($datos AS jsonb)) AS x(id int, numero int, cae text, cae_vence text)
-         WHERE c.id = x.id AND c.cooperativa_id = $cooperativaId`,
-        {
+      const { autorizados, rechazo } = await proveedor.autorizar(numerados, transaction);
+      const emitidos = numerados.filter((c) => autorizados.has(c.id));
+
+      if (emitidos.length < numerados.length) {
+        // Lo autorizado es el principio de cada talonario: el numerador vuelve al último que se usó.
+        for (const t of talonarios) {
+          const usados = t.ids.filter((id) => autorizados.has(id)).length;
+          if (t.ids.slice(0, usados).some((id) => !autorizados.has(id))) throw new Error('ARCA autorizó facturas salteadas: no se puede seguir sin huecos.');
+          await ejecutar(
+            `UPDATE numeradores SET ultimo = CAST($ultimo AS int), actualizado_el = now()
+             WHERE cooperativa_id = $cooperativaId AND tipo = 'factura' AND letra = $letra AND punto_venta = $puntoVenta`,
+            { cooperativaId, letra: t.letra, puntoVenta: t.puntoVenta, ultimo: t.primero - 1 + usados },
+            transaction,
+          );
+        }
+      }
+      if (emitidos.length) {
+        await ejecutar(
+          `UPDATE comprobantes c
+           SET numero = x.numero, emitido_el = CAST($fecha AS date), vence_el = CAST($vence AS date), saldo = GREATEST(c.total, 0),
+               estado = CASE WHEN c.total > 0 THEN 'emitido' ELSE 'pagado' END, cae = x.cae, cae_vence = CAST(x.cae_vence AS date),
+               cae_ambiente = x.ambiente, actualizado_el = now()
+           FROM jsonb_to_recordset(CAST($datos AS jsonb)) AS x(id int, numero int, cae text, cae_vence text, ambiente text)
+           WHERE c.id = x.id AND c.cooperativa_id = $cooperativaId`,
+          {
+            cooperativaId,
+            fecha: o.fechaEmision,
+            vence: venceEl,
+            datos: JSON.stringify(
+              emitidos.map((c) => {
+                const a = autorizados.get(c.id)!;
+                return { id: c.id, numero: c.numero, cae: a.cae, cae_vence: a.caeVence, ambiente: a.ambiente };
+              }),
+            ),
+          },
+          transaction,
+        );
+        await sellarComprobantes(
+          emitidos.map((c) => c.id),
+          transaction,
+        );
+      }
+      if (rechazo) {
+        await ejecutar(`UPDATE comprobantes SET error = $motivo, actualizado_el = now() WHERE id = $id AND cooperativa_id = $cooperativaId`, {
           cooperativaId,
-          fecha: o.fechaEmision,
-          vence: venceEl,
-          datos: JSON.stringify(numerados.map((c) => ({ id: c.id, numero: c.numero, cae: autorizaciones.get(c.id)?.cae ?? null, cae_vence: autorizaciones.get(c.id)?.caeVence ?? null }))),
-        },
-        transaction,
-      );
-      return lote.length;
+          id: rechazo.id,
+          motivo: rechazo.motivo.slice(0, 300),
+        }, transaction);
+      }
+      return { emitidas: emitidos.length, rechazadas: rechazo ? 1 : 0 };
     });
-    if (hechas === 0) break;
-    emitidas += hechas;
-    await o.alAvanzar?.(Math.min(emitidas, total), total);
+    if (hechas === null) break;
+    // Un lote sin ninguna emitida ni rechazada no avanza: se corta para no quedar dando vueltas.
+    if (hechas.emitidas === 0 && hechas.rechazadas === 0) break;
+    emitidas += hechas.emitidas;
+    rechazadas += hechas.rechazadas;
+    await o.alAvanzar?.(Math.min(emitidas + rechazadas, total), total);
   }
-  return { emitidas };
+  return { emitidas, rechazadas };
 }
 
 /** Deja un aviso por cada factura recién emitida a los socios que tienen email cargado. */
@@ -645,7 +694,7 @@ export async function lanzarProceso(
       });
       await cerrar({ estado: 'terminado' });
     } catch (err) {
-      const esperado = err instanceof HttpError || err instanceof ErrorDeCalculo;
+      const esperado = err instanceof HttpError || err instanceof ErrorDeCalculo || err instanceof ErrorArca;
       if (!esperado) console.error(`[FACTURACION] ${tipo} ${mes.mes}/${mes.anio}`, err);
       await cerrar({ estado: 'fallido', error: esperado ? err.message.slice(0, 300) : 'Se interrumpió por un problema nuestro. Probá de nuevo.' }).catch(() => undefined);
     }

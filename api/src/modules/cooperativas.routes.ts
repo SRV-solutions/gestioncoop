@@ -3,7 +3,9 @@
 import { Router, type Response } from 'express';
 import { col, fn, Op } from 'sequelize';
 import {
+  certificadoFiscalSchema,
   comisionSchema,
+  configFiscalSchema,
   leerImagen,
   logoFacturaSchema,
   MODELO_FACTURA_BASE,
@@ -20,6 +22,7 @@ import { writeAudit } from '../lib/audit';
 import { runInCooperativa, runUnscoped } from '../lib/context';
 import { clearCooperativaCache, toCooperativaPublica } from '../lib/cooperativas';
 import { badRequest, conflict, idParam, notFound, ok, parse } from '../lib/errors';
+import { borrarCertificado, guardarCertificado, guardarConfigFiscal, probarConexion, sincronizarNumeracion, vistaConfigFiscal } from '../lib/fiscal';
 import { esImagen, sirveParaPdf } from '../lib/imagenes';
 import { aVigencia, liquidacionDeCooperativa, liquidacionDelMes, mesesConFacturas, vigenteEl } from '../lib/srv';
 import { hoy } from '../lib/tarifas';
@@ -260,4 +263,51 @@ cooperativasRouter.post('/:id/factura/muestra', async (req, res: Response) => {
   });
   if (!r) throw conflict('Esta cooperativa todavía no emitió ninguna factura para mostrar de muestra.');
   enviarPdf(res, r.pdf, `muestra-${coop.subdominio}.pdf`);
+});
+
+/* ───────────────────────── Factura electrónica (ARCA) ───────────────────────── */
+
+/** Con qué se conecta la cooperativa a ARCA: ambiente, CUIT, punto de venta, certificado y conceptos. */
+cooperativasRouter.get('/:id/fiscal', async (req, res) => {
+  const coop = await cooperativaOFalla(idParam(req));
+  ok(res, await runInCooperativa(coop.id, vistaConfigFiscal));
+});
+
+cooperativasRouter.put('/:id/fiscal', async (req, res) => {
+  const coop = await cooperativaOFalla(idParam(req));
+  const datos = parse(configFiscalSchema, req.body);
+  ok(res, await runInCooperativa(coop.id, async () => {
+    await guardarConfigFiscal(datos, req.auth!.userId);
+    return vistaConfigFiscal();
+  }));
+});
+
+/** El certificado (.crt) y su clave privada (.key). La clave se guarda cifrada y nunca vuelve a salir. */
+cooperativasRouter.put('/:id/fiscal/certificado', async (req, res) => {
+  const coop = await cooperativaOFalla(idParam(req));
+  const datos = parse(certificadoFiscalSchema, req.body);
+  ok(res, await runInCooperativa(coop.id, async () => {
+    await guardarCertificado(datos, req.auth!.userId);
+    return vistaConfigFiscal();
+  }));
+});
+
+cooperativasRouter.delete('/:id/fiscal/certificado', async (req, res) => {
+  const coop = await cooperativaOFalla(idParam(req));
+  ok(res, await runInCooperativa(coop.id, async () => {
+    await borrarCertificado(req.auth!.userId);
+    return vistaConfigFiscal();
+  }));
+});
+
+/** Prueba de punta a punta con ARCA. No emite nada. */
+cooperativasRouter.post('/:id/fiscal/probar', async (req, res) => {
+  const coop = await cooperativaOFalla(idParam(req));
+  ok(res, await runInCooperativa(coop.id, probarConexion));
+});
+
+/** Lleva la numeración de GestiónCoop hasta la de ARCA (nunca para atrás). */
+cooperativasRouter.post('/:id/fiscal/sincronizar', async (req, res) => {
+  const coop = await cooperativaOFalla(idParam(req));
+  ok(res, await runInCooperativa(coop.id, sincronizarNumeracion));
 });

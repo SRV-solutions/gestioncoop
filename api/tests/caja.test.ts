@@ -20,6 +20,7 @@ import {
 import { sequelize } from '../src/db';
 import { runInCooperativa } from '../src/lib/context';
 import { calcularPrefacturas } from '../src/lib/facturacion';
+import { sellarPendientes, verificarIntegridad } from '../src/lib/integridad';
 import { hoy } from '../src/lib/tarifas';
 import { Auditoria, Pago } from '../src/models';
 import { callesInventadas } from '../src/seed/calles-inventadas';
@@ -92,6 +93,8 @@ beforeAll(async () => {
     { nombre: 'Garrafa de 10 kg', precio: '18500.00', stock: 5 },
     { nombre: 'Reconexión del servicio', precio: '12000.00', stock: null },
   ]);
+  // El historial de prueba entra directo a la base: se sella, como en el seed.
+  for (const coop of [w.a, w.b]) await sellarPendientes(coop.id);
   caja = await loginAs('caja@a.test');
   caja2 = await loginAs('caja2@a.test');
   admin = await loginAs('admin@a.test');
@@ -611,5 +614,14 @@ describe('aislamiento', () => {
     const [productoA] = await sql<{ id: number }>(`SELECT id FROM productos WHERE cooperativa_id = :a LIMIT 1`);
     expect((await cobrar({ items: [{ productoId: productoA!.id, cantidad: 1 }] }, adminB)).status).toBe(409);
     expect(await factura(f.id)).toMatchObject({ estado: 'emitido', saldo: f.saldo });
+  });
+});
+
+describe('integridad', () => {
+  it('cada cobro y cada anulación de estas pruebas quedó encadenado: la verificación da en orden', async () => {
+    for (const coop of [w.a, w.b]) {
+      const r = await runInCooperativa(coop.id, verificarIntegridad);
+      expect(r.problemas).toEqual([]);
+    }
   });
 });

@@ -25,6 +25,7 @@ import { writeAudit } from './audit';
 import { runUnscoped } from './context';
 import { badRequest, conflict, notFound } from './errors';
 import { reservarNumeros } from './facturacion';
+import { sellarPagos } from './integridad';
 import { requireCooperativaId } from './tenant';
 
 const dinero = (v: Decimal.Value) => new Decimal(v).toFixed(2);
@@ -206,6 +207,8 @@ export async function registrarCobro(input: CobroInput, usuarioId: number): Prom
         items.map((i) => ({ pagoId: pago.id, productoId: i.producto.id, descripcion: i.producto.nombre, cantidad: i.cantidad, unitario: dinero(i.producto.precio), importe: dinero(i.importe) })),
         { transaction },
       );
+      // El recibo ya está completo: entra en la cadena de su talonario.
+      await sellarPagos([pago.id], transaction);
       for (const a of aplicaciones) {
         await a.factura.update({ saldo: dinero(a.saldoDespues), estado: a.saldoDespues.isZero() ? 'pagado' : 'emitido' }, { transaction });
       }

@@ -17,6 +17,7 @@ import {
   formatPrecio,
   SERVICIO_ETIQUETA,
   TIPO_COMPROBANTE_ETIQUETA,
+  type AmbienteFiscal,
   type ComprobanteDetalle,
   type ConfigCooperativa,
   type GrupoRenglon,
@@ -40,8 +41,10 @@ export interface DatosPdf {
   historial: { anio: number; mes: number; consumo: number; estimada: boolean }[];
   /** Dirección que abre el QR; `null` = sin QR. */
   urlPago: string | null;
-  /** Sin validez fiscal (proveedor fiscal simulado). */
-  simulado: boolean;
+  /** Quién autorizó el comprobante: solo `produccion` tiene validez fiscal. */
+  ambienteFiscal: AmbienteFiscal;
+  /** QR de ARCA (RG 4892); `null` si el comprobante no lo autorizó ARCA. */
+  qrFiscal: string | null;
 }
 
 const MARGEN = 36;
@@ -189,7 +192,9 @@ export function pdfComprobante(d: DatosPdf): Promise<Buffer> {
   texto(`Período ${formatPeriodo(c.mes, c.anio)}`, cajaX + 10, MARGEN + 51, { size: 8.5, color: SUAVE, width: 176, align: 'right' });
 
   let y = finEncabezado + 8;
-  const leyenda = esBorrador ? 'PRE-FACTURA — todavía no emitida, puede cambiar' : c.estado === 'anulado' ? 'ANULADA por nota de crédito' : d.simulado ? 'DEMO — sin validez fiscal' : null;
+  const sinValidez =
+    d.ambienteFiscal === 'simulado' ? 'DEMO — sin validez fiscal' : d.ambienteFiscal === 'homologacion' ? 'PRUEBA DE ARCA (homologación) — sin validez fiscal' : null;
+  const leyenda = esBorrador ? 'PRE-FACTURA — todavía no emitida, puede cambiar' : c.estado === 'anulado' ? 'ANULADA por nota de crédito' : sinValidez;
   if (leyenda) {
     doc.roundedRect(MARGEN, y, UTIL, 17, 4).fill('#fdecea');
     texto(leyenda, MARGEN, y + 4.5, { size: 8.5, bold: true, color: ROJO, width: UTIL, align: 'center' });
@@ -388,7 +393,14 @@ export function pdfComprobante(d: DatosPdf): Promise<Buffer> {
     qr(doc, d.urlPago, derecha - 74, yPie - 2, 74);
     texto('Escaneá y pagá\ndesde el celular', derecha - 186, yPie + 22, { size: 8.5, bold: true, width: 104, align: 'right', lines: 2 });
   }
-  const fiscal = c.cae ? `CAE ${c.cae} · Vto. ${c.caeVence ? formatDate(c.caeVence) : '—'}${d.simulado ? ' (simulado)' : ''}` : '';
+  // QR de ARCA: entre el código de barras y el QR de pago (o donde iría el código de barras, en una nota de crédito).
+  if (d.qrFiscal && !esBorrador) {
+    const x = c.codigoDeBarras && c.tipo === 'factura' ? MARGEN + 256 : MARGEN;
+    qr(doc, d.qrFiscal, x, yPie, 50);
+    texto('Comprobante\nautorizado\npor ARCA', x + 54, yPie + 12, { size: 6.5, color: SUAVE, width: 48, lines: 3 });
+  }
+  const sufijo = d.ambienteFiscal === 'simulado' ? ' (simulado)' : d.ambienteFiscal === 'homologacion' ? ' (homologación)' : '';
+  const fiscal = c.cae ? `CAE ${c.cae} · Vto. ${c.caeVence ? formatDate(c.caeVence) : '—'}${sufijo}` : '';
   const guardias = cfg.guardias.map((g) => `Guardia ${SERVICIO_ETIQUETA[g.servicio].toLowerCase()}: ${g.telefono}`).join(' · ');
   const datosPie = [fiscal, guardias].filter(Boolean).join('   ·   ');
   if (modelo.pie) {

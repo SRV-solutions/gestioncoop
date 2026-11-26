@@ -102,6 +102,8 @@ export class Pago extends Model<InferAttributes<Pago>, InferCreationAttributes<P
   declare anuladoEl: CreationOptional<Date | null>;
   declare anuladoPor: CreationOptional<number | null>;
   declare motivoAnulacion: CreationOptional<string | null>;
+  /** Eslabón de la cadena de integridad de su talonario de recibos (ver lib/integridad). */
+  declare huella: CreationOptional<string | null>;
   declare creadoEl: CreationOptional<Date>;
   declare actualizadoEl: CreationOptional<Date>;
 
@@ -134,6 +136,7 @@ Pago.init(
     anuladoEl: { type: DataTypes.DATE, allowNull: true },
     anuladoPor: { type: DataTypes.INTEGER, allowNull: true },
     motivoAnulacion: { type: DataTypes.STRING(200), allowNull: true },
+    huella: { type: DataTypes.CHAR(64), allowNull: true },
     creadoEl: DataTypes.DATE,
     actualizadoEl: DataTypes.DATE,
   },

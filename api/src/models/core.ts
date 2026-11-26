@@ -148,6 +148,10 @@ export class Auditoria extends Model<InferAttributes<Auditoria>, InferCreationAt
   declare antesJson: unknown;
   declare despuesJson: unknown;
   declare ip: string | null;
+  /** Eslabón de la cadena del registro de la cooperativa (ver lib/integridad). */
+  declare huella: CreationOptional<string | null>;
+  /** Posición en esa cadena (en el orden en que se selló). */
+  declare selladoN: CreationOptional<string | null>;
   declare creadoEl: CreationOptional<Date>;
 }
 
@@ -162,6 +166,8 @@ Auditoria.init(
     antesJson: { type: DataTypes.JSONB, allowNull: true },
     despuesJson: { type: DataTypes.JSONB, allowNull: true },
     ip: { type: DataTypes.STRING(64), allowNull: true },
+    huella: { type: DataTypes.CHAR(64), allowNull: true },
+    selladoN: { type: DataTypes.BIGINT, allowNull: true },
     creadoEl: DataTypes.DATE,
   },
   { sequelize, tableName: 'auditoria', updatedAt: false },

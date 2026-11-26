@@ -1,10 +1,27 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Banknote, BookUser, Building2, ChartColumn, Coins, FileText, Gauge, LayoutDashboard, Map as MapIcon, Menu, MessageSquareWarning, Users, X, type LucideIcon } from 'lucide-react';
+import {
+  Banknote,
+  BookUser,
+  Building2,
+  ChartColumn,
+  Coins,
+  FileText,
+  Gauge,
+  LayoutDashboard,
+  Map as MapIcon,
+  Menu,
+  MessageSquareWarning,
+  ShieldCheck,
+  Users,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import type { Rol } from '@shared';
 import { useAuth } from '../lib/auth';
 import { cn } from '../lib/cn';
 import { CONTENIDO, SaltarAlContenido } from '../lib/pagina';
+import { Alertas } from './Alertas';
 import { CoopMark, NombreProducto, PoweredBy } from './Logo';
 import { Button } from './ui';
 import { UserMenu } from './UserMenu';
@@ -29,6 +46,7 @@ const NAV: NavItem[] = [
   { roles: ['admin', 'gerencia'], to: '/reclamos', label: 'Reclamos', icon: MessageSquareWarning },
   { roles: ['gerencia', 'admin', 'facturacion'], to: '/informes', label: 'Informes', icon: ChartColumn },
   { roles: ['admin'], to: '/admin/usuarios', label: 'Usuarios', icon: Users },
+  { roles: ['admin', 'gerencia'], to: '/integridad', label: 'Integridad', icon: ShieldCheck },
   { roles: ['gerencia', 'admin'], to: '/cooperativa', label: 'Cooperativa', icon: Building2 },
 ];
 
@@ -88,6 +106,7 @@ export function StaffLayout() {
           <Menu className="size-6" aria-hidden />
         </button>
         <span className="min-w-0 flex-1 truncate font-bold">{cooperativa?.nombreCorto ?? <NombreProducto />}</span>
+        <Alertas onDark />
         <UserMenu onDark compact />
       </div>
 
@@ -106,6 +125,7 @@ export function StaffLayout() {
             <p className="truncate font-bold leading-tight">{cooperativa?.nombreCorto ?? <NombreProducto />}</p>
             <p className="truncate text-xs text-white/65">{cooperativa?.localidad ?? 'Panel del proveedor'}</p>
           </div>
+          <Alertas onDark className="hidden lg:grid" />
           <button
             type="button"
             onClick={() => setOpen(false)}

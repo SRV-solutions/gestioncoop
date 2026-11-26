@@ -82,8 +82,11 @@ Con ellos aparece también el selector entre las dos cooperativas; sin ellos, la
 **Socios:** no tienen usuario ni contraseña. Entran en «Soy socio» con tres datos de su factura, igual que en la
 intranet que la cooperativa ya usa: **código de socio, número de conexión y DNI/CUIT/CUIL** (`POST /auth/acceso-socio`).
 Vale el DNI o el CUIT/CUIL que lo contiene, con o sin puntos. Si algo no coincide, el mensaje es el mismo para todo: no
-dice qué dato está mal ni si ese socio existe; hay un límite de intentos por conexión de internet. La primera vez se le
-arma un usuario por dentro (sin email y con una clave al azar que nadie conoce) para que tenga sesión.
+dice qué dato está mal ni si ese socio existe. Hay dos límites de intentos: por conexión de internet (15 cada 15 minutos)
+y **por código de socio**: 5 fallos seguidos en 15 minutos pausan el ingreso con ese código otros 15 minutos, aunque
+se cambie de conexión (tabla `intentos_acceso_socio`; la pausa queda en la auditoría). El contador va por el código tal
+como lo escriben, exista o no, así la pausa no revela si el socio existe. La primera vez se le arma un usuario por dentro
+(sin email y con una clave al azar que nadie conoce) para que tenga sesión.
 
 - **La sesión del socio dura 90 días** sin usarse (la del personal, 30) y se renueva con cada uso.
 - **«Salir» y «Ver otra cuenta»** están en el menú del usuario. Las cuentas que se abrieron en ese dispositivo quedan en
@@ -173,7 +176,10 @@ El operario entra desde el celular (`/operario`) y ve **Mi ruta de hoy** con el 
 - **Novedades:** medidor roto, sin acceso, perro, casa cerrada, posible fraude, pérdida visible, con foto y nota.
 - **Sin conexión:** cada lectura se escribe primero en el teléfono (IndexedDB, `client/src/features/operario/almacen.ts`)
   y después se manda. Sale de la cola recién cuando el servidor la confirma. Cada una lleva un UUID generado en el
-  teléfono: reintentar nunca duplica. La barra de arriba muestra siempre si hay señal y cuántas faltan enviar.
+  teléfono: reintentar nunca duplica. Reintenta sola al volver la señal, al volver a mirar la pantalla y cada 30
+  segundos. La app le pide al teléfono almacenamiento persistente, para que no borre la cola aunque se quede sin
+  espacio. La barra de arriba muestra siempre si hay señal y cuántas faltan enviar. Con la app cerrada no reintenta:
+  manda lo pendiente apenas se vuelve a abrir.
 - **Lista, búsqueda y mapa:** casas en orden de recorrido, búsqueda por medidor, dirección o titular, y mapa con lo que
   falta y la posición del operario. Cada lectura guarda hora y GPS (si el teléfono lo permite).
 - **Recorrido armado por la app:** el orden por defecto es el de la oficina. Con «Recorrido», el operario elige de
@@ -240,9 +246,11 @@ Cómo está hecho (`api/src/lib/facturacion.ts`, `api/src/modules/facturacion.ro
   pedirlo, siempre con lo que el comprobante tiene guardado. El QR apunta a `/pagar/<código>`, que es de la Fase 6.
 - **Código de barras:** 32 dígitos (cooperativa, comprobante, vencimiento, importe y verificador), Interleaved 2 of 5.
   `leerCodigoDeBarras` en `api/src/shared/facturacion.ts` es lo que usa la caja para encontrar la factura.
-- **Simulados** (`api/src/proveedores/`): factura electrónica (`ProveedorFiscal`: inventa un código con forma de CAE,
-  y los PDF dicen «DEMO — sin validez fiscal») y avisos (`ProveedorNotificaciones`: quedan en la tabla
-  `notificaciones`, no se envían).
+- **Factura electrónica** (`ProveedorFiscal`, `api/src/proveedores/fiscal.ts`): cada cooperativa elige en el Panel de
+  SRV si es **simulada** (inventa un código con forma de CAE y el PDF dice «DEMO — sin validez fiscal»), de
+  **homologación** (ARCA de prueba) o de **producción**. Ver «Factura electrónica con ARCA».
+- **Avisos al socio** (`ProveedorNotificaciones`): quedan en la tabla `notificaciones`. Con Resend y
+  `AVISOS_SOCIOS_POR_CORREO=true`, los de email salen de verdad.
 
 Pendiente de este módulo: nota de débito, nota de crédito parcial y refacturación de un servicio; la factura final de
 un servicio dado de baja (hoy los servicios de baja no se facturan).
@@ -519,6 +527,99 @@ El superadmin (SRV) ve en **Cooperativas** (`/superadmin`) cuánto le cobra a ca
   `GET /cooperativas/liquidacion?anio=&mes=`, `PUT /cooperativas/<id>/factura`, `PUT|DELETE|GET /cooperativas/<id>/factura/logo`,
   `POST /cooperativas/<id>/factura/muestra`. Solo el superadmin.
 
+En la misma página está la tarjeta **Factura electrónica (ARCA)** de cada cooperativa (ver la sección siguiente).
+
+## Factura electrónica con ARCA
+
+Cómo está hecho (`api/src/lib/arca/`, `api/src/lib/fiscal.ts`): sin librerías de terceros salvo `node-forge`, que firma
+el pedido de acceso (CMS/PKCS#7, el formato que pide ARCA y que Node no trae).
+
+- **WSAA (acceso):** arma el pedido, lo firma con el certificado de la cooperativa y guarda el permiso que devuelve
+  ARCA (vale unas 12 horas; ARCA no entrega otro mientras siga vigente). Se guarda **cifrado** en `config_fiscal` y se
+  reutiliza. Si ARCA dice que ya no vale (error 600), lo renueva una vez y reintenta.
+- **WSFEv1 (factura):** consulta el último número autorizado, pide el CAE de a 100 comprobantes y consulta un
+  comprobante ya autorizado.
+- **Importes** (`lib/arca/importes.ts`): el IVA sale de los conceptos cuyo código empieza con «IVA» (la misma regla del
+  libro de ventas), con su base, así el neto gravado es el que calculó la tarifa. El resto de los impuestos, tasas y
+  adicionales va como **tributo, no gravado o exento** según lo que defina el contador en el Panel de SRV (por
+  defecto: los gravámenes como «otros tributos» y los adicionales como no gravados). Si los importes no cierran al
+  centavo, no se manda a ARCA: la factura queda con el motivo.
+- **Rechazos:** si ARCA rechaza una factura en el medio de un lote, las anteriores quedan emitidas (ya están
+  autorizadas), esa queda como pre-factura con el motivo, la numeración se reacomoda sin huecos y el resto del mes
+  sigue. El mes no se cierra hasta emitir la rechazada (se corrige el dato, se vuelve a calcular y se emite).
+- **Si algo se corta** después de que ARCA autorizó: al reintentar, la app le pregunta a ARCA qué números ya autorizó y
+  recupera esos CAE (comprobando total, fecha y documento) en lugar de pedirlos de nuevo. Si ARCA tiene ese número con
+  otros datos, frena y avisa: nunca pisa nada.
+- **Nota de crédito:** pide su propio CAE con la factura asociada. Si ARCA la rechaza, no queda nada a medias.
+- **PDF:** la leyenda dice si es demo o prueba de ARCA (homologación); en producción no lleva leyenda. Todo comprobante
+  autorizado por ARCA lleva el **QR fiscal** (RG 4892) y su CAE.
+- **Recibos:** no pasan por ARCA.
+
+En el **Panel de SRV**, tarjeta «Factura electrónica (ARCA)» de cada cooperativa: ambiente, CUIT (con su dígito
+verificador), punto de venta, el certificado y su clave (la clave se guarda cifrada con `CLAVE_CIFRADO` y nunca vuelve a
+salir), cómo va cada concepto, **Probar con ARCA** (servidores, permiso de acceso y numeración de cada talonario) y
+**Sincronizar numeración** (lleva la numeración de la app hasta la de ARCA cuando la cooperativa ya facturaba con otro
+sistema en ese punto de venta; nunca la hace retroceder). Pasar a producción hay que confirmarlo.
+
+**Para probar sin la cooperativa (homologación), con tu propio CUIT:** generar una clave privada y un pedido de
+certificado (CSR); en ARCA, con clave fiscal, habilitar «WSASS - Autogestión Certificados Homologación», pegar el CSR,
+bajar el certificado y autorizarlo para «wsfe». Cargar el `.crt` y el `.key` en el Panel de SRV, elegir
+«Homologación», un punto de venta y «Probar con ARCA». Lo que se emita en homologación no tiene validez fiscal.
+
+**Para producción** hace falta, de la cooperativa: el certificado de su CUIT asociado a «wsfe», un punto de venta
+habilitado para web services, y que su contador confirme el tipo de comprobante (A/B), las alícuotas de IVA de cada
+servicio y cómo va cada concepto.
+
+> **Uso en paralelo:** mientras la cooperativa siga facturando con su sistema actual, GestiónCoop **no** tiene que
+> emitir en producción en el mismo punto de venta (los dos sistemas se pisarían la numeración ante ARCA). Durante la
+> transición, GestiónCoop corre el mismo mes en simulado (o en homologación) para comparar los importes con los del
+> sistema actual; el día del cambio se pasa a producción, con su punto de venta.
+
+Probado contra un ARCA de mentira que responde como el real (`api/tests/arca-falso.ts`, `api/tests/arca.test.ts`):
+emisión completa, rechazo en el medio, recuperación, nota de crédito, numeración desalineada y ARCA sin conexión.
+**Todavía no se probó contra el ARCA de homologación de verdad:** hace falta un certificado de prueba.
+
+## Integridad de los datos
+
+Cada factura, nota de crédito y recibo emitido lleva una **huella**: una firma HMAC-SHA256 de sus datos —con su
+detalle completo: renglones, aplicaciones e ítems— más la huella del anterior de su talonario (tipo, letra y punto de
+venta). El registro de cambios (auditoría) va encadenado igual, por cooperativa. La firma usa `CLAVE_INTEGRIDAD`, que
+**no está en la base**: con acceso solo a la base no se puede rehacer la cadena para tapar un cambio
+(`api/src/lib/integridad.ts`).
+
+- **Se sella al emitir:** en la misma transacción que reserva el número (emisión, nota de crédito, cobro en caja y pago
+  online). El registro de cambios se sella apenas se confirma cada operación, en una transacción corta propia con un
+  turno por cooperativa, así dos operaciones nunca se traban esperándose. Un registro agregado a mano en la base nunca
+  recibe huella.
+- **Lo que no entra en la huella** porque cambia con el uso (el saldo y el estado de una factura; el estado de un
+  recibo al anularse) se controla aparte: el saldo tiene que ser el total menos lo cobrado, el estado tiene que cerrar
+  con el saldo, una factura anulada tiene que tener su nota de crédito y **toda anulación tiene que figurar en el
+  registro de cambios sellado**. También: el total de cada comprobante es la suma de sus renglones y el importe de cada
+  recibo es lo aplicado más lo vendido más lo que quedó a favor.
+- **Qué detecta:** un dato cambiado, un comprobante o registro borrado (falta el número y el eslabón siguiente no
+  cierra), uno agregado sin huella, un número repetido, saldos y recibos que no cierran y anulaciones hechas a mano.
+  Marca el lugar exacto. `api/tests/integridad.test.ts` lo prueba tocando la base de cada una de esas formas, y los
+  tests de facturación, caja y portal terminan verificando que todo lo que hicieron quedó encadenado.
+- **Verificación:** todos los días a las 03:30 (`VERIFICACION_HORA`) para cada cooperativa, y cuando se pida desde
+  **Integridad** (`/integridad`, administración y gerencia). En la demo, Dos de Mayo (49.000 comprobantes y 21.000
+  recibos) se verifica en unos 5 segundos.
+- **Si encuentra algo,** avisa en la campana y por mail a la administración y la gerencia de la cooperativa y a SRV.
+- **Datos que ya existían** (el seed de la demo; una migración): `sellarPendientes` sella lo que todavía no tiene huella,
+  en orden, y nunca rehace un eslabón ya sellado. El seed lo corre al terminar.
+- **La clave no se cambia nunca:** con otra clave, toda la cadena deja de cerrar. Si se cambia de versión mayor de
+  Postgres, conviene verificar enseguida (parte del detalle se resume en la base y depende de cómo escribe el JSON).
+- Rutas: `GET /integridad`, `POST /integridad/verificar`, `GET /integridad/verificaciones/<id>`.
+
+## Alertas y mails
+
+- **La campana** (arriba, en el marco de escritorio): las alertas de quien está usando la app. A SRV le llegan las de
+  todas las cooperativas; al abrir una, entra a esa cooperativa. Rutas: `GET /alertas`, `POST /alertas/<id>/leida`,
+  `POST /alertas/leer-todas`.
+- **Mails con Resend** (`api/src/proveedores/correo.ts`): con `RESEND_API_KEY`, las alertas salen por mail de verdad
+  (de a 100 por pedido). Sin clave, no sale ninguno y quedan como simulados. A los usuarios de prueba y a las direcciones
+  inventadas (`.example`, `.test`) nunca se les manda nada. `CORREO_REMITENTE` tiene que ser de un dominio verificado en
+  Resend.
+
 ## Presentación y videos para la cooperativa
 
 En `docs/presentacion/` están las fuentes del material para mostrarle la plataforma a una cooperativa. Lo generado va
@@ -526,7 +627,7 @@ a la carpeta **«GestionCoop - material para la cooperativa»**, al lado del pro
 
 ```
 node docs/presentacion/capturas.mjs     # capturas en tema claro (escritorio y celular)
-python docs/presentacion/build.py       # presentación en PDF y una imagen por diapositiva
+python docs/presentacion/build.py       # presentación en PDF (para el mail, sin usuarios; y para la reunión, completa) e imágenes
 node docs/presentacion/videos.mjs       # cuatro videos (vecino, operario, oficina, gerencia) y uno que los une
 ```
 
@@ -568,10 +669,12 @@ En orden de lo que destraba más:
    trabajar sin señal después de cerrarla, GPS y cámara. También ahí se mide Lighthouse.
 2. **Datos reales de la cooperativa:** padrón, tarifas vigentes de todas las categorías y la migración desde el
    sistema actual (hay que relevar en qué formato exporta).
-3. **Facturación electrónica** con ARCA (hoy simulada): hace falta el certificado de la cooperativa.
+3. **Facturación electrónica** con ARCA: está hecha y probada contra un ARCA de mentira. Falta probarla en el
+   ARCA de homologación (con un certificado de prueba) y, para producción, el certificado y el punto de venta de la
+   cooperativa y lo que confirme su contador.
 4. **Pago online real** con Macro Click de Pago (hoy simulado): hace falta la documentación técnica y las
    credenciales de prueba del banco. Después, la conciliación con su liquidación.
-5. **Avisos reales** por email o WhatsApp (hoy quedan guardados y no se envían).
+5. **Mails:** listos con Resend; falta la clave y un dominio verificado. WhatsApp sigue sin proveedor.
    Y decidir con la cooperativa si el ingreso del socio con los datos de la factura alcanza (ver «Usuarios»).
 6. Lo pendiente de cada módulo, que está al final de su sección en este documento.
 7. **Nombre definitivo** del producto (por ahora, GestiónCoop): se cambia en un solo lugar (`api/src/shared/constants.ts`).
@@ -627,6 +730,8 @@ puesto. La pantalla de ingreso tiene su propio botón de sol y luna porque ahí 
 
 - **API en Railway:** el `Procfile` instala, compila, migra, corre el seed inicial y arranca. Variables: las de
   `api/.env.example` (`NODE_ENV=production`, `DATABASE_URL`, `JWT_SECRET` de 32+ caracteres, `APP_URL` con la dirección
-  del front, `TRUST_PROXY=2`, `DEMO_MODE`, `DEMO_ACCESO_RAPIDO`, `SUPERADMIN_*`).
+  del front, `TRUST_PROXY=2`, `DEMO_MODE`, `DEMO_ACCESO_RAPIDO`, `SUPERADMIN_*`). En producción son obligatorias
+  **`CLAVE_CIFRADO` y `CLAVE_INTEGRIDAD`** (32+ caracteres cada una, distintas, al azar y **que no cambien nunca**:
+  guardarlas también fuera de Railway). Para los mails, `RESEND_API_KEY` y `CORREO_REMITENTE`.
 - **Client en Netlify:** Base directory `client`. Definir `API_URL` con la dirección de la API en Railway: el build
   genera el proxy de `/api`, así el navegador ve un solo dominio y las cookies funcionan sin CORS.

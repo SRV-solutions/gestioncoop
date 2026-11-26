@@ -24,6 +24,7 @@ import { referenciaRecibo, titularDe } from './caja';
 import { runInCooperativa, runUnscoped } from './context';
 import { conflict, notFound } from './errors';
 import { reservarNumeros } from './facturacion';
+import { sellarPagos } from './integridad';
 import { requireCooperativaId } from './tenant';
 
 /** Cuánto tiempo tiene el socio para pagar en la pasarela antes de que el intento venza. */
@@ -140,6 +141,8 @@ async function acreditar(r: ResultadoPago): Promise<number> {
       aplicaciones.map((a) => ({ pagoId: pago.id, comprobanteId: a.factura.id, importe: dinero(a.importe), saldoDespues: dinero(a.saldoDespues) })),
       { transaction },
     );
+    // El recibo ya está completo: entra en la cadena de su talonario.
+    await sellarPagos([pago.id], transaction);
     for (const a of aplicaciones) {
       await a.factura.update({ saldo: dinero(a.saldoDespues), estado: a.saldoDespues.isZero() ? 'pagado' : 'emitido' }, { transaction });
     }

@@ -16,3 +16,6 @@ export * from './mapa';
 export * from './tutoriales';
 export * from './recorrido';
 export * from './srv';
+export * from './fiscal';
+export * from './integridad';
+export * from './alertas';

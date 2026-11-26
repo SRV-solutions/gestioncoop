@@ -1,10 +1,11 @@
 import { Router, type Request } from 'express';
 import rateLimit from 'express-rate-limit';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import { accesoSocioSchema, avanceTutorialesSchema, cooperativaActivaSchema, demoLoginSchema, loginSchema, mismoDocumento, SIN_TUTORIALES, subdominioSchema, type LoginContext, type Rol } from '../shared';
 import { config } from '../config';
 import { sequelize } from '../db';
-import { Conexion, Cooperativa, RolUsuario, Socio, Usuario } from '../models';
+import { Conexion, Cooperativa, IntentoAccesoSocio, RolUsuario, Socio, Usuario } from '../models';
+import { requireCooperativaId } from '../lib/tenant';
 import { writeAudit } from '../lib/audit';
 import { runInCooperativa, runUnscoped } from '../lib/context';
 import { findCooperativaBySubdominio, subdominioOf, toCooperativaPublica } from '../lib/cooperativas';
@@ -88,6 +89,42 @@ authRouter.post('/login', loginLimiter, async (req, res) => {
   ok(res, await buildMe(await startSession(user, req, res)));
 });
 
+/* ───────────────────────── Fallos en el ingreso del socio ───────────────────────── */
+
+/** Cuántos fallos seguidos con un mismo código de socio, en cuánto tiempo, y cuánto dura la pausa. */
+export const INGRESO_SOCIO = { fallos: 5, ventanaMin: 15, pausaMin: 15 } as const;
+
+const pausado = () =>
+  new HttpError(
+    429,
+    `Por seguridad pausamos el ingreso con ese código de socio durante ${INGRESO_SOCIO.pausaMin} minutos. Si sos vos, esperá un rato o llamá a la cooperativa.`,
+    'ingreso_pausado',
+  );
+
+/** Va dentro de la cooperativa del pedido. La clave es el código tal como lo escribieron: exista o no, así no se revela nada. */
+async function frenarSiEstaBloqueado(clave: string): Promise<void> {
+  const fila = await IntentoAccesoSocio.findOne({ where: { clave } });
+  if (fila?.bloqueadoHasta && fila.bloqueadoHasta.getTime() > Date.now()) throw pausado();
+}
+
+async function anotarFallo(clave: string): Promise<void> {
+  const ventana = new Date(Date.now() - INGRESO_SOCIO.ventanaMin * 60_000);
+  const [fila] = await sequelize.query<{ fallidos: number; bloqueado: boolean }>(
+    `INSERT INTO intentos_acceso_socio (cooperativa_id, clave, fallidos, primer_fallo_el, bloqueado_hasta)
+     VALUES ($cooperativaId, $clave, 1, now(), NULL)
+     ON CONFLICT (cooperativa_id, clave) DO UPDATE SET
+       fallidos = CASE WHEN intentos_acceso_socio.primer_fallo_el < $ventana OR intentos_acceso_socio.bloqueado_hasta < now() THEN 1 ELSE intentos_acceso_socio.fallidos + 1 END,
+       primer_fallo_el = CASE WHEN intentos_acceso_socio.primer_fallo_el < $ventana OR intentos_acceso_socio.bloqueado_hasta < now() THEN now() ELSE intentos_acceso_socio.primer_fallo_el END,
+       bloqueado_hasta = CASE WHEN intentos_acceso_socio.bloqueado_hasta < now() THEN NULL ELSE intentos_acceso_socio.bloqueado_hasta END
+     RETURNING fallidos, (bloqueado_hasta IS NOT NULL) AS bloqueado`,
+    { bind: { cooperativaId: requireCooperativaId(), clave, ventana }, type: QueryTypes.SELECT },
+  );
+  if (fila && fila.fallidos >= INGRESO_SOCIO.fallos && !fila.bloqueado) {
+    await IntentoAccesoSocio.update({ bloqueadoHasta: new Date(Date.now() + INGRESO_SOCIO.pausaMin * 60_000) }, { where: { clave } });
+    await writeAudit({ accion: 'pausar_ingreso_socio', entidad: 'socio', entidadId: clave, despues: { fallidos: fila.fallidos, minutos: INGRESO_SOCIO.pausaMin } });
+  }
+}
+
 /** «Benítez, Marta» → «Marta Benítez» (así lo saluda la app). Las razones sociales quedan como están. */
 const nombreParaUsuario = (nombre: string) => {
   const [apellido, nombres] = nombre.split(',').map((p) => p.trim());
@@ -106,9 +143,17 @@ authRouter.post('/acceso-socio', limiter(15), async (req, res) => {
   const noCoincide = new HttpError(401, 'Esos datos no coinciden con los de la cooperativa. Están en tu factura: revisalos y probá de nuevo.', 'datos_no_coinciden');
 
   const usuarioId = await runInCooperativa(coop.id, async () => {
+    // Además del límite por conexión de internet, uno por código de socio: cambiar de conexión no sirve
+    // para seguir probando documentos contra el mismo socio.
+    const clave = String(d.socio);
+    await frenarSiEstaBloqueado(clave);
     const socio = await Socio.findOne({ where: { numero: d.socio, estado: 'activo' } });
     const conexion = socio ? await Conexion.findOne({ where: { socioId: socio.id, numero: d.conexion } }) : null;
-    if (!socio || !conexion || !mismoDocumento(socio.nroDoc, d.documento)) throw noCoincide;
+    if (!socio || !conexion || !mismoDocumento(socio.nroDoc, d.documento)) {
+      await anotarFallo(clave);
+      throw noCoincide;
+    }
+    await IntentoAccesoSocio.destroy({ where: { clave } });
     if (socio.usuarioId) return socio.usuarioId;
 
     return sequelize.transaction(async (transaction) => {

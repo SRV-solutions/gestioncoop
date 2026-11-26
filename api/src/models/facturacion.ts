@@ -1,6 +1,6 @@
 // Facturación (Fase 4): comprobantes y renglones, numeradores, trabajos en segundo plano y avisos al socio.
 import { DataTypes, Model, type CreationOptional, type ForeignKey, type InferAttributes, type InferCreationAttributes, type NonAttribute } from 'sequelize';
-import type { EstadoComprobante, GrupoRenglon, MotivoRara, ServicioConexion, SnapshotComprobante, TipoComprobante, TipoProceso } from '../shared';
+import type { AmbienteFiscal, EstadoComprobante, GrupoRenglon, MotivoRara, ServicioConexion, SnapshotComprobante, TipoComprobante, TipoProceso } from '../shared';
 import { sequelize } from '../db';
 import { Usuario } from './core';
 import { Periodo } from './lecturas';
@@ -46,6 +46,10 @@ export class Comprobante extends Model<InferAttributes<Comprobante>, InferCreati
   declare motivo: CreationOptional<string | null>;
   declare cae: CreationOptional<string | null>;
   declare caeVence: CreationOptional<string | null>;
+  /** Quién autorizó el comprobante. Solo `produccion` tiene validez fiscal. */
+  declare caeAmbiente: CreationOptional<AmbienteFiscal | null>;
+  /** Eslabón de la cadena de integridad de su talonario (ver lib/integridad). */
+  declare huella: CreationOptional<string | null>;
   declare snapshotJson: SnapshotComprobante;
   declare creadoPor: CreationOptional<number | null>;
   declare creadoEl: CreationOptional<Date>;
@@ -90,6 +94,8 @@ Comprobante.init(
     motivo: { type: DataTypes.STRING(200), allowNull: true },
     cae: { type: DataTypes.STRING(20), allowNull: true },
     caeVence: { type: DataTypes.DATEONLY, allowNull: true },
+    caeAmbiente: { type: DataTypes.STRING(14), allowNull: true },
+    huella: { type: DataTypes.CHAR(64), allowNull: true },
     snapshotJson: { type: DataTypes.JSONB, allowNull: false },
     creadoPor: { type: DataTypes.INTEGER, allowNull: true },
     creadoEl: DataTypes.DATE,

@@ -16,6 +16,7 @@ import {
 import { sequelize } from '../src/db';
 import { runInCooperativa } from '../src/lib/context';
 import { esperarProcesos, reservarNumeros } from '../src/lib/facturacion';
+import { sellarPendientes, verificarIntegridad } from '../src/lib/integridad';
 import { hoy } from '../src/lib/tarifas';
 import { Auditoria, Comprobante, Notificacion, Periodo, ServicioConexionModel } from '../src/models';
 import { sumarDias } from '../src/motor';
@@ -65,6 +66,8 @@ beforeAll(async () => {
     await cargarTarifas(coop.id, TARIFAS_ARROYO_DEL_MONTE);
     await cargarLecturas(coop.id, { hoy: HOY, semilla, avance: [0.5, 0] });
     await cargarFacturas(coop.id, { semilla });
+    // El historial de prueba entra directo a la base: se sella, como en el seed.
+    await sellarPendientes(coop.id);
   }
   await createUser({ cooperativaId: w.a.id, email: 'facturacion@a.test', roles: ['facturacion'] });
   oficina = await loginAs('facturacion@a.test');
@@ -489,5 +492,18 @@ describe('aislamiento', () => {
     expect(propios.total).toBe(Number(totalB!.n));
     // B sigue con su mes en lectura: lo que hizo A no lo movió.
     expect((await estado(b)).mes).toEqual({ anio: ANIO, mes: MES, estado: 'en_lectura' });
+  });
+});
+
+describe('integridad', () => {
+  it('cada factura emitida y cada nota de crédito de estas pruebas quedó encadenada', async () => {
+    await esperarProcesos();
+    // Acá el historial no tiene sus cobros cargados: se controla la cadena y los totales, no los saldos.
+    const deCadena = new Set(['huella_no_coincide', 'sin_huella', 'numeracion_salteada', 'numero_repetido', 'total_no_cierra', 'anulada_sin_nota', 'anulacion_sin_registro']);
+    for (const coop of [w.a, w.b]) {
+      const r = await runInCooperativa(coop.id, verificarIntegridad);
+      expect(r.problemas.filter((p) => deCadena.has(p.tipo))).toEqual([]);
+      expect(r.resumen.auditoria.problemas).toBe(0);
+    }
   });
 });

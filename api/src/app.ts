@@ -4,16 +4,19 @@ import helmet from 'helmet';
 import { ZodError } from 'zod';
 import type { ApiResponse } from './shared';
 import { config } from './config';
+import { ErrorArca } from './lib/arca/transporte';
 import { requestContext } from './lib/context';
 import { HttpError, notFound, ok, zodFieldErrors } from './lib/errors';
 import { TenantIsolationError } from './lib/tenant';
 import { authenticate, checkOrigin } from './middlewares/auth';
 import { ErrorDeCalculo } from './motor';
+import { alertasRouter } from './modules/alertas.routes';
 import { authRouter } from './modules/auth.routes';
 import { cajaRouter } from './modules/caja.routes';
 import { cooperativasRouter } from './modules/cooperativas.routes';
 import { imagenCooperativaPublica, miCooperativaRouter } from './modules/mi-cooperativa.routes';
 import { facturacionRouter } from './modules/facturacion.routes';
+import { integridadRouter } from './modules/integridad.routes';
 import { lecturasRouter } from './modules/lecturas.routes';
 import { mapaRouter } from './modules/mapa.routes';
 import { padronRouter } from './modules/padron.routes';
@@ -69,6 +72,8 @@ export function createApp() {
   api.use('/cortes', cortesRouter);
   api.use('/tablero', tableroRouter);
   api.use('/informes', informesRouter);
+  api.use('/integridad', integridadRouter);
+  api.use('/alertas', alertasRouter);
   api.use(() => {
     throw notFound('Esa dirección no existe');
   });
@@ -85,6 +90,8 @@ export function createApp() {
     if (err instanceof HttpError) out = err;
     // El motor explica por qué no pudo calcular (falta un cuadro, una lectura...): ese texto sí se muestra.
     else if (err instanceof ErrorDeCalculo) out = new HttpError(422, err.message, `calculo_${err.codigo}`);
+    // ARCA rechazó o no respondió: el mensaje ya está escrito para la persona que factura.
+    else if (err instanceof ErrorArca) out = new HttpError(502, err.message, 'arca');
     else if (err instanceof ZodError) out = new HttpError(400, 'Revisá los datos marcados', 'bad_request', zodFieldErrors(err));
     else if (err?.type === 'entity.too.large') out = new HttpError(413, 'El archivo es demasiado grande', 'too_large');
     else if (err?.type === 'entity.parse.failed') out = new HttpError(400, 'No pudimos leer el pedido', 'bad_request');
