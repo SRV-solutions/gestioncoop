@@ -1,0 +1,91 @@
+/* Presentación de GestiónCoop. Sistema visual de SRV: negro, azul y naranja. Cada diapositiva, 1920×1080. */
+@page { size: 1920px 1080px; margin: 0; }
+:root {
+  --negro: #0d0d0d;
+  --azul: #0b6be0;
+  --azul-fuerte: #0957b8;
+  --azul-tenue: #e7f1ff;
+  --naranja: #f6950a;
+  --naranja-tenue: #fff0d9;
+  --tinta: #14181f;
+  --texto: #3a424e;
+  --suave: #68717d;
+  --linea: #d9dee6;
+  --fondo: #f4f6f9;
+}
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; font-family: 'Segoe UI', system-ui, Arial, sans-serif; color: var(--texto); }
+section { position: relative; width: 1920px; height: 1080px; overflow: hidden; break-after: page; padding: 96px 120px; background: #fff; }
+section:last-child { break-after: auto; }
+h1, h2, h3 { color: var(--tinta); margin: 0; letter-spacing: -0.02em; line-height: 1.08; }
+h2 { font-size: 72px; font-weight: 900; }
+h3 { font-size: 34px; font-weight: 800; }
+p { margin: 0; }
+.eyebrow { font-size: 22px; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; color: var(--azul); margin-bottom: 18px; }
+.lead { font-size: 34px; line-height: 1.4; color: var(--texto); margin-top: 24px; max-width: 1400px; }
+.producto i, .punto { font-style: normal; color: var(--naranja); }
+.pie { position: absolute; left: 120px; right: 120px; bottom: 44px; display: flex; justify-content: space-between; font-size: 20px; color: var(--suave); }
+.pie b { color: var(--tinta); }
+
+/* Oscuras: portada, cierre */
+section.oscura { background: var(--negro); color: #c9d1dc; }
+section.oscura h1, section.oscura h2, section.oscura h3 { color: #fff; }
+section.oscura .pie { color: #8a93a0; }
+.anillos { position: absolute; right: -330px; top: -380px; width: 1250px; height: 1250px; }
+.banda { position: absolute; left: 0; right: 0; bottom: 0; height: 18px; background: linear-gradient(to right, var(--azul) 0 70%, var(--naranja) 70% 100%); }
+
+.powered { display: inline-flex; align-items: center; gap: 16px; padding: 10px 28px 10px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 24px; }
+.powered img { width: 52px; height: 52px; border-radius: 50%; background: #fff; }
+.powered b { color: var(--naranja); }
+.powered small { display: block; font-size: 17px; color: #9aa3b0; }
+.claro .powered { background: var(--fondo); color: var(--tinta); border: 1px solid var(--linea); }
+
+/* Tarjetas y listas */
+.grilla { display: grid; gap: 28px; }
+.g2 { grid-template-columns: 1fr 1fr; }
+.g3 { grid-template-columns: repeat(3, 1fr); }
+.tarjeta { background: var(--fondo); border-radius: 24px; padding: 30px 34px; border-top: 6px solid var(--azul); }
+.tarjeta h3 { font-size: 32px; margin: 18px 0 10px; }
+.tarjeta p { font-size: 25px; line-height: 1.4; }
+.tarjeta.naranja { border-top-color: var(--naranja); }
+.icono { width: 64px; height: 64px; border-radius: 18px; background: var(--azul-tenue); color: var(--azul); display: grid; place-items: center; }
+.icono svg { width: 36px; height: 36px; }
+.naranja .icono { background: var(--naranja-tenue); color: #b56a00; }
+ul.puntos { list-style: none; padding: 0; margin: 0; }
+ul.puntos li { position: relative; padding-left: 46px; font-size: 28px; line-height: 1.38; margin-bottom: 20px; color: var(--texto); }
+ul.puntos li::before { content: ''; position: absolute; left: 0; top: 10px; width: 24px; height: 24px; border-radius: 50%; background: var(--azul-tenue); box-shadow: inset 0 0 0 7px var(--azul); }
+ul.puntos b { color: var(--tinta); }
+
+/* Capturas */
+.cels { display: flex; gap: 34px; align-items: flex-start; }
+.cel { width: 350px; border-radius: 40px; border: 12px solid var(--negro); box-shadow: 0 24px 60px rgba(13, 13, 13, 0.25); overflow: hidden; background: #fff; }
+.cel img { display: block; width: 100%; }
+.pc { border-radius: 18px; overflow: hidden; border: 1px solid var(--linea); box-shadow: 0 24px 60px rgba(13, 13, 13, 0.18); background: #fff; }
+.pc img { display: block; width: 100%; }
+
+/* Flujo del mes */
+.flujo { display: grid; grid-template-columns: repeat(5, 1fr); gap: 22px; margin-top: 70px; }
+.paso { position: relative; background: var(--fondo); border-radius: 26px; padding: 36px 30px 34px; }
+.paso .num { font-size: 22px; font-weight: 900; color: var(--azul); letter-spacing: 2px; }
+.paso h3 { font-size: 34px; margin: 18px 0 12px; }
+.paso p { font-size: 24px; line-height: 1.4; }
+.paso + .paso::before { content: ''; position: absolute; left: -22px; top: 70px; width: 22px; height: 4px; background: var(--naranja); }
+
+/* Tabla de usuarios */
+table.usuarios { width: 100%; border-collapse: collapse; font-size: 27px; margin-top: 44px; }
+table.usuarios th { text-align: left; background: var(--negro); color: #fff; padding: 18px 24px; font-weight: 700; }
+table.usuarios td { padding: 17px 24px; border-bottom: 1px solid var(--linea); color: var(--tinta); }
+table.usuarios tr:nth-child(even) td { background: var(--fondo); }
+.dato { font-family: Consolas, monospace; font-size: 25px; }
+
+/* Línea de pasos (cómo seguimos) */
+.camino { margin-top: 56px; display: grid; gap: 22px; }
+.etapa { display: grid; grid-template-columns: 90px 1fr; gap: 28px; align-items: start; }
+.etapa .n { width: 72px; height: 72px; border-radius: 50%; background: var(--azul); color: #fff; font-size: 32px; font-weight: 900; display: grid; place-items: center; }
+.etapa.hecho .n { background: var(--naranja); }
+.etapa h3 { font-size: 34px; margin-top: 4px; }
+.etapa p { font-size: 25px; line-height: 1.4; margin-top: 6px; }
+
+.nota { margin-top: 30px; font-size: 23px; color: var(--suave); }
+.solvix { position: absolute; }

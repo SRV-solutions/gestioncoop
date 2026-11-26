@@ -6,7 +6,7 @@ import { config } from '../config';
 import { sequelize } from '../db';
 import { Conexion, Cooperativa, RolUsuario, Socio, Usuario } from '../models';
 import { writeAudit } from '../lib/audit';
-import { runInCooperativa } from '../lib/context';
+import { runInCooperativa, runUnscoped } from '../lib/context';
 import { findCooperativaBySubdominio, subdominioOf, toCooperativaPublica } from '../lib/cooperativas';
 import { conflict, HttpError, notFound, ok, parse, unauthorized } from '../lib/errors';
 import { dummyHash, hashPassword, randomToken, verifyPassword } from '../lib/security';
@@ -154,14 +154,16 @@ authRouter.get('/me', authenticate, async (req, res) => {
  * Tutoriales con Solvix: cuáles hizo y cuáles omitió quien está usando la app. Se guarda en su
  * cuenta para que la presentación no se repita en cada dispositivo.
  */
+// Es la fila de quien pregunta (sale de su sesión): sin filtro de cooperativa, así anda también
+// para el superadmin antes de elegir una.
 authRouter.get('/tutoriales', authenticate, async (req, res) => {
-  const user = await Usuario.findByPk(req.auth!.userId, { attributes: ['id', 'tutorialesJson'] });
+  const user = await runUnscoped(() => Usuario.findByPk(req.auth!.userId, { attributes: ['id', 'tutorialesJson'] }));
   ok(res, user?.tutorialesJson ?? SIN_TUTORIALES);
 });
 
 authRouter.put('/tutoriales', authenticate, async (req, res) => {
   const avance = parse(avanceTutorialesSchema, req.body);
-  await Usuario.update({ tutorialesJson: avance }, { where: { id: req.auth!.userId } });
+  await runUnscoped(() => Usuario.update({ tutorialesJson: avance }, { where: { id: req.auth!.userId } }));
   ok(res, avance);
 });
 

@@ -155,7 +155,6 @@ export function pdfComprobante(d: DatosPdf): Promise<Buffer> {
   /* ── Encabezado: logo (si hay), nombre y datos; a la derecha, tipo y número ── */
   const modelo = d.cooperativa.modelo;
   const cajaX = derecha - 196;
-  doc.rect(MARGEN, MARGEN, 5, 74).fill(color);
   let xTexto = MARGEN + 14;
   if (d.cooperativa.logo) {
     try {
@@ -166,16 +165,20 @@ export function pdfComprobante(d: DatosPdf): Promise<Buffer> {
     }
   }
   const anchoTexto = cajaX - 10 - xTexto;
-  texto(d.cooperativa.nombre, xTexto, MARGEN, { size: 11.5, bold: true, width: anchoTexto, lines: 2 });
+  // Con logo queda menos ancho: el nombre puede ir en tres renglones y el domicilio, en dos.
+  const conLogo = xTexto > MARGEN + 14;
+  texto(d.cooperativa.nombre, xTexto, MARGEN, { size: conLogo ? 10.5 : 11.5, bold: true, width: anchoTexto, lines: conLogo ? 3 : 2 });
   const yDatos = doc.y + 3;
+  const lugar = `${cfg.localidad} (${cfg.codigoPostal}), ${cfg.provincia}`;
   const membrete = [
     `CUIT ${formatCuit(d.cooperativa.cuit)} · ${cfg.condicionIva}`,
-    `${cfg.domicilio} · ${cfg.localidad} (${cfg.codigoPostal}), ${cfg.provincia}`,
+    ...(conLogo ? [cfg.domicilio, lugar] : [`${cfg.domicilio} · ${lugar}`]),
     cfg.telefonos.length ? `Tel. ${cfg.telefonos.join(' / ')}` : null,
     ...modelo.membrete,
   ].filter((r): r is string => !!r);
   membrete.forEach((r, i) => texto(r, xTexto, yDatos + i * 11, { size: 8.5, color: SUAVE, width: anchoTexto }));
   const finEncabezado = Math.max(MARGEN + 74, yDatos + membrete.length * 11);
+  doc.rect(MARGEN, MARGEN, 5, finEncabezado - MARGEN).fill(color);
 
   doc.roundedRect(cajaX, MARGEN, 196, 74, 6).lineWidth(0.8).stroke(LINEA);
   doc.roundedRect(cajaX + 10, MARGEN + 10, 34, 34, 4).lineWidth(1.2).stroke(TINTA);

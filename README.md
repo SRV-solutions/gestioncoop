@@ -1,10 +1,10 @@
-# CoopGestión
+# GestiónCoop
 
 Plataforma de gestión para cooperativas de servicios: del medidor a la caja, sin papeles y sin planillas.
 Cliente piloto: Cooperativa de Agua, Energía y Otros Servicios Comunitarios de Dos de Mayo Ltda. (Misiones).
 
-La especificación completa está en `../SPEC-app-gestion-cooperativa.md`. «CoopGestión» es un nombre provisorio:
-para cambiarlo alcanza con editar `APP_NOMBRE` en `api/src/shared/constants.ts`.
+La especificación completa está en `../SPEC-app-gestion-cooperativa.md`. El nombre (por ahora, GestiónCoop) se cambia
+en un solo lugar: `APP_NOMBRE` en `api/src/shared/constants.ts`. Repositorio: `SRV-solutions/gestioncoop`.
 
 **Estado: las nueve fases del SPEC están listas en local** (falta publicarlas). El guion para mostrarla está en
 [docs/GUION-DEMO.md](docs/GUION-DEMO.md).
@@ -65,15 +65,19 @@ La primera vez hay que crear `api/.env` copiando `api/.env.example`.
 
 ## Usuarios
 
-**Modo demo** (`DEMO_MODE=true`): la pantalla de ingreso muestra botones «Entrar como socio / operario / caja /
-facturación / gerencia / administración» y un selector entre las dos cooperativas de la demo. No piden contraseña.
+**Usuarios de prueba** (`DEMO_MODE=true`): entran con su email y la clave de `DEMO_PASSWORD` (en la demo,
+`demo1234`). Con `DEMO_MODE=false` no pueden entrar de ninguna forma.
+
+Los botones «Entrar como socio / operario / caja…» de la pantalla de ingreso, que entran sin contraseña, están
+**apagados**: se prenden con `DEMO_ACCESO_RAPIDO=true` (sirve para ensayar rápido, no para mandarle la demo a nadie).
+Con ellos aparece también el selector entre las dos cooperativas; sin ellos, la segunda se abre con
+`/login?coop=arroyodelmonte`.
 
 | Cooperativa | Usuarios de prueba |
 |---|---|
 | AyE Dos de Mayo | `socio`, `operario`, `operario2`, `operario3`, `caja`, `caja2`, `facturacion`, `gerencia`, `admin` — todos `@dosdemayo.example` |
 | Arroyo del Monte (inventada, para mostrar el aislamiento) | `socio`, `operario`, `caja`, `facturacion`, `gerencia`, `admin` — todos `@arroyodelmonte.example` |
 
-También entran con email y la clave de `DEMO_PASSWORD`. Con `DEMO_MODE=false` no pueden entrar de ninguna forma.
 
 **Socios:** no tienen usuario ni contraseña. Entran en «Soy socio» con tres datos de su factura, igual que en la
 intranet que la cooperativa ya usa: **código de socio, número de conexión y DNI/CUIT/CUIL** (`POST /auth/acceso-socio`).
@@ -459,7 +463,7 @@ el menú del usuario → **Tutoriales**.
 
 ## Manual de uso
 
-`docs/CoopGestion-Manual.pdf` (21 páginas) explica cada sección, quién ve qué y con qué datos entrar a la demo. Se arma
+`docs/GestionCoop-Manual.pdf` (22 páginas, no va al repo) explica cada sección, quién ve qué y con qué datos entrar a la demo. Se arma
 desde `docs/manual/` (`index.html`, `contratapa.html`, `manual.css`, `img/`):
 
 ```
@@ -477,8 +481,60 @@ cuadrado (512 px, tomando el centro) antes de mandarla; aparece en la pantalla d
   contenido del archivo además de lo que dice ser. Cada cambio queda en la auditoría.
 - La imagen se guarda en la base (`cooperativa_imagenes`) y se sirve sin sesión, porque la muestra la pantalla de
   ingreso: `GET /publico/cooperativas/<id>/imagen?v=<marca>`. La dirección cambia con cada imagen.
-- No hay un rol «presidencia»: hoy la cambia quien tenga el rol de gerencia. Las facturas en PDF siguen saliendo con
-  el encabezado de texto, sin la imagen.
+- No hay un rol «presidencia»: hoy la cambia quien tenga el rol de gerencia.
+- El logo de Dos de Mayo en la demo es el que publica la cooperativa en su sitio (coopaye.coop.ar). Está en
+  `api/src/seed/data/marcas` y el seed lo carga si la cooperativa no tiene uno: la parte «AyE» como isotipo de la app y
+  el logo completo para la factura.
+
+## Panel de SRV: comisión y diseño de la factura
+
+El superadmin (SRV) ve en **Cooperativas** (`/superadmin`) cuánto le cobra a cada cooperativa en el mes, y en
+**Comisión y factura** (`/superadmin/cooperativas/<id>`) maneja las dos cosas de cada una.
+
+**Comisión por factura** (`api/src/lib/srv.ts`, tabla `comisiones_srv`):
+
+- Un porcentaje de cada factura que emite la cooperativa (la propuesta inicial es **0,8 %**) y, si se quiere, un
+  monto fijo por factura. Se cambia cuando se quiera (1 %, 0,5 %…).
+- Va por **vigencias**, como las tarifas: un cambio rige desde una fecha (hoy o más adelante) y cada factura paga la
+  comisión que regía el día en que se emitió. Una comisión que todavía no rige se puede borrar; las que ya rigieron
+  quedan en el historial. Cada cambio queda en la auditoría.
+- Cuentan las facturas y notas de débito emitidas. Las **notas de crédito descuentan** el porcentaje de lo que acreditan
+  (el fijo no se devuelve): una factura anulada no termina cobrándose. Se calcula factura por factura y se redondea el
+  total del mes.
+- **No cambia la factura del socio:** es lo que SRV le cobra a la cooperativa. Si la cooperativa quisiera trasladarlo,
+  se cargaría como un concepto más en Tarifas, pero en energía y agua las tarifas son reguladas: primero hay que
+  consultarlo con el ente y con un contador.
+- En la demo, las dos cooperativas tienen 0,8 % desde enero de 2025 (lo carga el seed), así la liquidación tiene meses
+  para mostrar. `api/tests/srv.test.ts` vuelve a calcular cada número factura por factura.
+
+**Diseño de la factura** (`config_json.factura` de la cooperativa; el PDF en `api/src/lib/pdf-comprobante.ts`):
+
+- Logo propio de la factura (PNG o JPG, con sus proporciones; si no hay, va el isotipo), color, hasta tres renglones
+  extra en el encabezado (ingresos brutos, inicio de actividades…), un aviso destacado para todos los socios y un texto
+  legal al pie.
+- «Ver cómo queda» arma la última factura emitida con los cambios todavía sin guardar. Al guardar, todas las facturas
+  que se abran desde ese momento (también las del portal del socio) salen con el diseño nuevo: el PDF se arma al
+  pedirlo, con lo que la factura tiene guardado.
+- Rutas: `GET /cooperativas/<id>`, `POST /cooperativas/<id>/comisiones`, `DELETE /cooperativas/<id>/comisiones/<id>`,
+  `GET /cooperativas/liquidacion?anio=&mes=`, `PUT /cooperativas/<id>/factura`, `PUT|DELETE|GET /cooperativas/<id>/factura/logo`,
+  `POST /cooperativas/<id>/factura/muestra`. Solo el superadmin.
+
+## Presentación y videos para la cooperativa
+
+En `docs/presentacion/` están las fuentes del material para mostrarle la plataforma a una cooperativa. Lo generado va
+a la carpeta **«GestionCoop - material para la cooperativa»**, al lado del proyecto (fuera del repo):
+
+```
+node docs/presentacion/capturas.mjs     # capturas en tema claro (escritorio y celular)
+python docs/presentacion/build.py       # presentación en PDF y una imagen por diapositiva
+node docs/presentacion/videos.mjs       # cuatro videos (vecino, operario, oficina, gerencia) y uno que los une
+```
+
+Usan Chrome sin ventana por el protocolo de DevTools (`cdp.mjs`, sin dependencias) y ffmpeg. Necesitan la API y el
+cliente corriendo. No escriben en la base: no confirman pagos ni lecturas y no abren la caja; el avance de tutoriales de
+cada usuario de prueba queda como estaba. **No usar capturas de la caja**: pueden mostrar cajas de prueba de personas
+reales. `panel-srv.mjs` saca capturas del panel de SRV para revisarlo (entra como superadmin con los datos de
+`api/.env`, sin mostrarlos).
 
 ## Pulido y accesibilidad
 
@@ -518,7 +574,7 @@ En orden de lo que destraba más:
 5. **Avisos reales** por email o WhatsApp (hoy quedan guardados y no se envían).
    Y decidir con la cooperativa si el ingreso del socio con los datos de la factura alcanza (ver «Usuarios»).
 6. Lo pendiente de cada módulo, que está al final de su sección en este documento.
-7. **Nombre definitivo** del producto: se cambia en un solo lugar (`api/src/shared/constants.ts`).
+7. **Nombre definitivo** del producto (por ahora, GestiónCoop): se cambia en un solo lugar (`api/src/shared/constants.ts`).
 
 ## Comandos de la API
 
@@ -571,7 +627,6 @@ puesto. La pantalla de ingreso tiene su propio botón de sol y luna porque ahí 
 
 - **API en Railway:** el `Procfile` instala, compila, migra, corre el seed inicial y arranca. Variables: las de
   `api/.env.example` (`NODE_ENV=production`, `DATABASE_URL`, `JWT_SECRET` de 32+ caracteres, `APP_URL` con la dirección
-  del front, `TRUST_PROXY=2`, `DEMO_MODE`, `SUPERADMIN_*`).
+  del front, `TRUST_PROXY=2`, `DEMO_MODE`, `DEMO_ACCESO_RAPIDO`, `SUPERADMIN_*`).
 - **Client en Netlify:** Base directory `client`. Definir `API_URL` con la dirección de la API en Railway: el build
   genera el proxy de `/api`, así el navegador ve un solo dominio y las cookies funcionan sin CORS.
-# gestioncoop

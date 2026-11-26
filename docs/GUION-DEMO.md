@@ -26,21 +26,20 @@ Hacelo el día anterior y otra vez una hora antes.
 > instalar la app ni usar el GPS, y la computadora no acepta conexiones desde otros equipos. Por ahora el celular se
 > muestra en la vista de dispositivo de Chrome. Decilo así: «esto mismo es lo que ve el operario en su teléfono».
 
-Los usuarios de prueba entran sin contraseña desde los botones de **Modo demo** de la pantalla de ingreso:
+Los usuarios de prueba entran como cualquier persona: el personal, en «Trabajo en la cooperativa», con su email y la
+contraseña `demo1234`; la socia, en «Soy socio», con los tres datos de su factura.
 
-| Botón | Quién es | Para qué flujo |
+| Quién es | Cómo entra | Para qué flujo |
 |---|---|---|
-| Operario | Ramón Sosa | 1 |
-| Gerencia | Carlos Giménez | 2 y 6 |
-| Facturación | Silvia Rojas | 3 |
-| Socio | Marta Benítez | 4 |
-| Caja | Claudia Wagner | 5 |
-| Administración | Andrea Lukoski | reclamos, usuarios, cargar la energía comprada |
+| Ramón Sosa (operario) | `operario@dosdemayo.example` | 1 |
+| Carlos Giménez (gerencia) | `gerencia@dosdemayo.example` | 2 y 6 |
+| Silvia Rojas (facturación) | `facturacion@dosdemayo.example` | 3 |
+| Marta Benítez (socia) | socio `1043`, conexión `1026`, DNI `99.658.939` | 4 |
+| Claudia Wagner (caja) | `caja@dosdemayo.example` | 5 |
+| Andrea Lukoski (administración) | `admin@dosdemayo.example` | reclamos, usuarios, cargar la energía comprada |
 
-**El ingreso real del vecino** no tiene usuario ni contraseña: en «Soy socio» se escriben tres datos de la factura.
-Para mostrarlo con Marta: código de socio `1043`, conexión `1026`, DNI `99.658.939`. El personal también puede entrar
-escribiendo su email (`gerencia@dosdemayo.example`, etc.) y la contraseña de la demo; la lista completa está en el
-anexo del manual (`docs/CoopGestion-Manual.pdf`).
+Para ensayar más rápido se pueden prender los botones de «Modo demo» (entran sin escribir nada) con
+`DEMO_ACCESO_RAPIDO=true` en `api/.env`. Para mostrársela a la cooperativa, mejor apagados: así ven el ingreso real.
 
 **Solvix** (el astronauta de los tutoriales) se presenta solo la primera vez que entra cada usuario. Mostralo una vez,
 con el primero que entres, y en los demás tocá **Omitir**: lleva un segundo y no vuelve a aparecer.
@@ -61,7 +60,7 @@ Mostrá la pantalla de ingreso: el nombre y el isotipo de la cooperativa, sus se
 
 En la ventana del **celular del operario**:
 
-1. Entrá con **Operario**. Aparece «Mi ruta de hoy» con sus rutas y cuánto lleva de cada una.
+1. Entrá como operario. Aparece «Mi ruta de hoy» con sus rutas y cuánto lleva de cada una.
 2. Tocá **Ruta 4 · Sagrado Corazón de Jesús** (va por 36 de 160 casas). Antes de seguir, mostrá **Recorrido**:
    elegí una calle, la app ordena las casas que faltan y dice cuántos kilómetros se ahorran; aceptalo y abrí **Mapa**
    para ver el recorrido dibujado con el número de cada paso. Después tocá **Seguir**.
@@ -84,7 +83,7 @@ abrir la casa que quiera.
 
 En la ventana de la **oficina**, mientras el operario sigue cargando:
 
-1. Entrá con **Gerencia** y abrí **Mapa**.
+1. Entrá como gerencia y abrí **Mapa**.
 2. Tocá **Lecturas en vivo**. Las casas leídas están en verde y las que faltan en gris; abajo dice cuántos medidores
    van.
 3. Acercá el mapa a Sagrado Corazón de Jesús y cargá una lectura más en el celular: a los pocos segundos esa casa
@@ -96,7 +95,7 @@ En la ventana de la **oficina**, mientras el operario sigue cargando:
 
 ### 3. Facturación emite el mes (6 minutos)
 
-En la ventana de la oficina, salí y entrá con **Facturación**. Abrí **Facturación**: es un asistente de cuatro
+En la ventana de la oficina, salí y entrá como facturación. Abrí **Facturación**: es un asistente de cuatro
 pasos (abrir la lectura, controlar lecturas, pre-facturar y revisar, emitir).
 
 1. **Controlar lecturas:** muestra cuántos medidores faltan. Tocá **Estimar los …** (se estiman con el promedio de
@@ -118,7 +117,7 @@ ARCA se hace con el certificado de la cooperativa.
 
 En la ventana del **celular de la socia**:
 
-1. Entrá como Marta Benítez **escribiendo sus tres datos** en «Soy socio» (o, si hay apuro, con el botón **Socio**).
+1. Entrá como Marta Benítez **escribiendo sus tres datos** en «Soy socio».
    El inicio dice en grande cuánto debe y avisa del corte programado en su zona.
 2. Abrí **Facturas** y tocá la de **energía de noviembre**.
 3. En la misma pantalla está **¿Por qué pago esto?**: una barra muestra en qué se va la plata y hasta dónde llega
@@ -140,7 +139,7 @@ documentación técnica y las credenciales de prueba del banco.
 
 ### 5. La caja cobra en el mostrador (4 minutos)
 
-En la ventana de la oficina, salí y entrá con **Caja**. No hace falta el mouse.
+En la ventana de la oficina, salí y entrá como caja. No hace falta el mouse.
 
 1. Escribí el **fondo inicial** y Enter: la caja queda abierta.
 2. En el buscador (F2), escribí un apellido o un número de socio. Con el lector, alcanza con pasar el código de
@@ -155,7 +154,7 @@ En la ventana de la oficina, salí y entrá con **Caja**. No hace falta el mouse
 
 ### 6. Gerencia mira el resultado (5 minutos)
 
-En la ventana de la oficina, entrá con **Gerencia**.
+En la ventana de la oficina, entrá como gerencia.
 
 1. **Tablero:** muestra noviembre, recién facturado. Señalá lo facturado, lo ya cobrado (el pago de Marta) y, más
    abajo, la **recaudación del mes**, donde figuran el cobro de la caja y el pago online.
@@ -174,7 +173,8 @@ En la ventana de la oficina, entrá con **Gerencia**.
 
 ### 7. Otra cooperativa, otros datos (1 minuto)
 
-Salí. En la pantalla de ingreso, en **Modo demo**, elegí **Arroyo del Monte** y entrá con Gerencia.
+Salí, abrí `/login?coop=arroyodelmonte` (es la pantalla de ingreso de la otra cooperativa, con su marca) y entrá con
+`gerencia@arroyodelmonte.example` y la misma contraseña.
 
 > «La plataforma sirve a más de una cooperativa. Cada una ve su marca y solo sus datos: ni una consulta cruza de una
 > a otra, y eso está probado de forma automática.»

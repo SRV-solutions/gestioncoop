@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<title>GestiónCoop — Propuesta para la Cooperativa AyE Dos de Mayo</title>
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<!-- Íconos (SVG, trazo de 2 px). -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-socio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></symbol>
+    <symbol id="i-casco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h18"/><path d="M5 18v-3a7 7 0 0 1 14 0v3"/><path d="M10 9V5h4v4"/></symbol>
+    <symbol id="i-caja" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol>
+    <symbol id="i-factura" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-tablero" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
+    <symbol id="i-ajustes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+    <symbol id="i-medidor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></symbol>
+    <symbol id="i-control" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></symbol>
+    <symbol id="i-mapa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></symbol>
+    <symbol id="i-escudo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></symbol>
+    <symbol id="i-reloj" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-capas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 5-10 5L2 7z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></symbol>
+    <symbol id="i-candado" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-celular" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
+    <symbol id="i-prueba" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></symbol>
+  </defs>
+</svg>
+
+<!-- ================= 1. PORTADA ================= -->
+<section class="oscura">
+  <svg class="anillos" viewBox="0 0 600 600" aria-hidden="true">
+    <circle cx="300" cy="300" r="110" fill="none" stroke="#fff" stroke-opacity="0.07" stroke-width="1.5"/>
+    <circle cx="300" cy="300" r="170" fill="none" stroke="#fff" stroke-opacity="0.07" stroke-width="1.5"/>
+    <circle cx="300" cy="300" r="230" fill="none" stroke="#fff" stroke-opacity="0.07" stroke-width="1.5"/>
+    <circle cx="300" cy="300" r="290" fill="none" stroke="#fff" stroke-opacity="0.07" stroke-width="1.5"/>
+    <path d="M130 300 A170 170 0 0 0 300 470" fill="none" stroke="#f6950a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M100.8 415 A230 230 0 0 0 185 499.2" fill="none" stroke="#5aa5fd" stroke-width="5" stroke-linecap="round" stroke-opacity="0.85"/>
+  </svg>
+  <p class="eyebrow" style="color:#f6950a">Propuesta · Noviembre 2026</p>
+  <h1 style="font-size:150px;font-weight:900;margin-top:40px">GestiónCoop<i class="punto">.</i></h1>
+  <p style="font-size:44px;color:#e6ebf2;margin-top:26px;max-width:1000px;line-height:1.3">Del medidor a la caja, sin papeles y sin planillas.</p>
+  <div style="display:flex;align-items:center;gap:34px;margin-top:90px">
+    <div style="background:#fff;border-radius:28px;padding:22px 30px"><img src="img/logo-cooperativa.png" alt="Logo de la cooperativa" style="height:170px;display:block"></div>
+    <div>
+      <p style="font-size:24px;color:#9aa3b0;letter-spacing:2px;text-transform:uppercase;font-weight:700">Para</p>
+      <p style="font-size:34px;color:#fff;font-weight:700;line-height:1.3;max-width:700px;margin-top:8px">Cooperativa de Agua, Energía y Otros Servicios Comunitarios de Dos de Mayo Ltda.</p>
+    </div>
+  </div>
+  <img class="solvix" src="img/solvix-wave.png" alt="" style="right:150px;bottom:90px;width:380px">
+  <div style="position:absolute;left:120px;bottom:70px"><span class="powered"><img src="img/srv-logo-512.png" alt="">Powered by <b>SRV</b></span></div>
+  <div class="banda"></div>
+</section>
+
+<!-- ================= 2. QUÉ RESUELVE ================= -->
+<section>
+  <p class="eyebrow">Qué resuelve</p>
+  <h2>Todo el mes de la cooperativa en un solo lugar</h2>
+  <p class="lead">Lecturas, facturación, cobros, reclamos y números del mes, conectados. Lo que carga una persona lo ven las demás en el momento, sin pasar datos de una planilla a otra.</p>
+  <div class="grilla g2" style="margin-top:64px">
+    <div class="tarjeta"><div class="icono"><svg><use href="#i-celular"/></svg></div><h3>El lecturista, con el celular</h3><p>Carga cada lectura en la calle, con o sin señal. Si un consumo es raro, lo avisa en el momento.</p></div>
+    <div class="tarjeta"><div class="icono"><svg><use href="#i-factura"/></svg></div><h3>Facturas que se entienden</h3><p>Cada factura explica en palabras simples en qué se va la plata, consumo por consumo.</p></div>
+    <div class="tarjeta naranja"><div class="icono"><svg><use href="#i-caja"/></svg></div><h3>Cobrar en un solo lugar</h3><p>Caja con lector de código de barras, pago online y QR de la factura de papel, en la misma cuenta.</p></div>
+    <div class="tarjeta naranja"><div class="icono"><svg><use href="#i-tablero"/></svg></div><h3>Los números, al día</h3><p>Tablero del mes, informes para bajar en Excel y el mapa con la situación de cada casa.</p></div>
+  </div>
+  <div class="pie"><span><b>GestiónCoop</b><span class="punto">.</span></span><span>2</span></div>
+</section>
+
+<!-- ================= 3. QUÉ ES ================= -->
+<section>
+  <p class="eyebrow">Qué es</p>
+  <h2>Una plataforma, cada persona con lo suyo</h2>
+  <p class="lead">Funciona en el navegador de la computadora y del celular, sin instalar nada. Cada uno entra y ve solo lo que corresponde a su tarea. Sirve para energía, agua, internet, TV, sepelio y gas envasado.</p>
+  <div class="grilla g3" style="margin-top:40px">
+    <div class="tarjeta"><div class="icono"><svg><use href="#i-socio"/></svg></div><h3>Socio</h3><p>Ve y paga sus facturas, su consumo y sus reclamos.</p></div>
+    <div class="tarjeta"><div class="icono"><svg><use href="#i-casco"/></svg></div><h3>Operario</h3><p>Carga las lecturas de su ruta desde el celular.</p></div>
+    <div class="tarjeta"><div class="icono"><svg><use href="#i-caja"/></svg></div><h3>Caja</h3><p>Cobra en el mostrador y cierra el turno con arqueo.</p></div>
+    <div class="tarjeta naranja"><div class="icono"><svg><use href="#i-factura"/></svg></div><h3>Facturación</h3><p>Controla las lecturas, revisa y emite el mes.</p></div>
+    <div class="tarjeta naranja"><div class="icono"><svg><use href="#i-tablero"/></svg></div><h3>Gerencia</h3><p>Tablero, informes y mapa de toda la cooperativa.</p></div>
+    <div class="tarjeta naranja"><div class="icono"><svg><use href="#i-ajustes"/></svg></div><h3>Administración</h3><p>Tarifas, padrón, usuarios, reclamos y cortes.</p></div>
+  </div>
+  <div class="pie"><span><b>GestiónCoop</b><span class="punto">.</span></span><span>3</span></div>
+</section>
+
+<!-- ================= 4. EL MES SIN PAPELES ================= -->
+<section>
+  <p class="eyebrow">Un mes completo</p>
+  <h2>Del medidor a la caja</h2>
+  <p class="lead">Cada paso alimenta al siguiente. Nada se vuelve a tipear.</p>
+  <div class="flujo">
+    <div class="paso"><div class="icono"><svg><use href="#i-medidor"/></svg></div><p class="num" style="margin-top:22px">1 · LECTURA</p><h3>En la calle</h3><p>El operario carga con el celular; la app le arma el recorrido más corto.</p></div>
+    <div class="paso"><div class="icono"><svg><use href="#i-control"/></svg></div><p class="num" style="margin-top:22px">2 · CONTROL</p><h3>En la oficina</h3><p>Lo que falta se estima; lo raro se revisa con la foto del operario.</p></div>
+    <div class="paso"><div class="icono"><svg><use href="#i-factura"/></svg></div><p class="num" style="margin-top:22px">3 · FACTURA</p><h3>Sin errores</h3><p>Pre-factura, revisión de las raras y emisión numerada, con código de barras y QR.</p></div>
+    <div class="paso"><div class="icono"><svg><use href="#i-caja"/></svg></div><p class="num" style="margin-top:22px">4 · COBRO</p><h3>Donde quiera</h3><p>En la caja, desde el celular o con el QR del papel. El recibo sale solo.</p></div>
+    <div class="paso"><div class="icono"><svg><use href="#i-tablero"/></svg></div><p class="num" style="margin-top:22px">5 · RESULTADO</p><h3>A la vista</h3><p>Facturado, cobrado, deuda y pérdidas de energía, en el tablero y en el mapa.</p></div>
+  </div>
+  <div class="pie"><span><b>GestiónCoop</b><span class="punto">.</span></span><span>4</span></div>
+</section>
+
+<!-- ================= 5. SOCIO ================= -->
+<section>
+  <div style="display:grid;grid-template-columns:760px 1fr;gap:90px;align-items:start">
+    <div>
+      <p class="eyebrow">El socio</p>
+      <h2>Su cuenta, en el celular</h2>
+      <ul class="puntos" style="margin-top:46px">
+        <li><b>Sin usuario ni contraseña:</b> entra con el código de socio, la conexión y su documento, que están en la factura.</li>
+        <li><b>Cuánto debe</b>, de un vistazo, y los cortes programados en su zona.</li>
+        <li><b>«¿Por qué pago esto?»</b>: cada factura explicada en palabras simples.</li>
+        <li><b>Paga</b> eligiendo qué facturas, con el total exacto antes de ir al banco.</li>
+        <li><b>Reclama</b> con una foto y sigue cómo va, sin llamar.</li>
+      </ul>
+    </div>
+    <div class="cels" style="margin-top:30px">
+      <div class="cel"><img src="../capturas/cel-inicio.png" alt="Inicio del socio"></div>
+      <div class="cel" style="margin-top:60px"><img src="../capturas/cel-por-que.png" alt="Explicación de la factura"></div>
+    </div>
+  </div>
+  <div class="pie"><span><b>GestiónCoop</b><span class="punto">.</span></span><span>5</span></div>
+</section>
+
+<!-- ================= 6. OPERARIO ================= -->
+<section>
+  <div style="display:grid;grid-template-columns:1fr 720px;gap:80px;align-items:start">
+    <div class="cels" style="margin-top:30px">
+      <div class="cel"><img src="../capturas/cel-operario-propuesta.png" alt="Recorrido armado por la app"></div>
+      <div class="cel" style="margin-top:60px"><img src="../capturas/cel-operario-mapa.png" alt="Recorrido en el mapa"></div>
+    </div>
+    <div>
+      <p class="eyebrow">El operario</p>
+      <h2>Lecturas en la calle, con o sin señal</h2>
+      <ul class="puntos" style="margin-top:46px">
+        <li><b>La app le arma el recorrido</b> desde donde sale, para que camine menos.</li>
+        <li><b>Una casa por pantalla</b> y teclado grande, para usar con una mano.</li>
+        <li><b>Avisa en el momento</b> si un consumo es raro, y pide foto.</li>
+        <li><b>Sin señal no se pierde nada:</b> se guarda en el teléfono y sale sola.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="pie"><span><b>GestiónCoop</b><span class="punto">.</span></span><span>6</span></div>
+</section>
+
+<!-- ================= 7. FACTURACIÓN ================= -->
+<section>
+  <p class="eyebrow">La oficina</p>
+  <h2>Facturar el mes, sin emitir nada a ciegas</h2>
+  <div style="display:grid;grid-template-columns:1fr 600px;gap:70px;margin-top:54px;align-items:start">
+    <div class="pc"><img src="../capturas/pc-facturacion.png" alt="Asistente de facturación"></div>
+    <ul class="puntos">
+      <li><b>Cuatro pasos:</b> abrir la lectura, controlar, revisar las raras y emitir.</li>
+      <li><b>Tarifas con historia:</b> cada cambio rige desde una fecha.</li>
+      <li><b>Numeración correlativa</b> y facturas que no se editan: se corrigen con nota de crédito.</li>
+      <li><b>Caja</b> con lector de código de barras y arqueo al cerrar el turno.</li>
+    </ul>
+  </div>
+  <div class="pie"><span><b>GestiónCoop</b><span class="punto">.</span></span><span>7</span></div>
+</section>
+
+<!-- ================= 8. GERENCIA ================= -->
+<section>
+  <p class="eyebrow">La gerencia</p>
+  <h2>Los números del mes y el pueblo en el mapa</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:54px">
+    <div class="pc"><img src="../capturas/pc-tablero.png" alt="Tablero de gerencia"></div>
+    <div class="pc"><img src="../capturas/pc-mapa.png" alt="Mapa de la cooperativa"></div>
+  </div>
+  <div class="grilla g2" style="margin-top:40px;gap:40px">
+    <p style="font-size:27px;line-height:1.4"><b style="color:var(--tinta)">Tablero:</b> facturado, cobrado, deuda, consumo, reclamos y balance de energía. Informes en Excel, CSV o PDF.</p>
+    <p style="font-size:27px;line-height:1.4"><b style="color:var(--tinta)">Mapa:</b> cada casa con su situación, los cortes de cada zona y las lecturas en vivo.</p>
+  </div>
+  <div class="pie"><span><b>GestiónCoop</b><span class="punto">.</span></span><span>8</span></div>
+</section>
+
+<!-- ================= 9. SEGURIDAD ================= -->
+<section>
+  <p class="eyebrow">Cuidado de los datos</p>
+  <h2>Cada uno ve lo suyo, y todo queda registrado</h2>
+  <div class="grilla g3" style="margin-top:64px">
+    <div class="tarjeta"><div class="icono"><svg><use href="#i-escudo"/></svg></div><h3>Permisos por rol</h3><p>Se controlan en el servidor, no en la pantalla.</p></div>
+    <div class="tarjeta"><div class="icono"><svg><use href="#i-reloj"/></svg></div><h3>Auditoría</h3><p>Todo lo que toca plata, tarifas o padrón queda con nombre, fecha y hora.</p></div>
+    <div class="tarjeta"><div class="icono"><svg><use href="#i-capas"/></svg></div><h3>Datos separados</h3><p>Cada cooperativa ve solo sus datos. Está probado de forma automática.</p></div>
+    <div class="tarjeta naranja"><div class="icono"><svg><use href="#i-candado"/></svg></div><h3>Contraseñas cifradas</h3><p>Nadie las puede leer, tampoco nosotros.</p></div>
+    <div class="tarjeta naranja"><div class="icono"><svg><use href="#i-socio"/></svg></div><h3>Ingreso del socio</h3><p>Tres datos juntos, intentos limitados y un mensaje que no revela qué dato está mal.</p></div>
+    <div class="tarjeta naranja"><div class="icono"><svg><use href="#i-prueba"/></svg></div><h3>Demo con datos de prueba</h3><p>Personas y deudas inventadas. Solo las calles y las tarifas son reales.</p></div>
+  </div>
+  <div class="pie"><span><b>GestiónCoop</b><span class="punto">.</span></span><span>9</span></div>
+</section>
+
+<!-- ================= 10. CÓMO SEGUIMOS ================= -->
+<section>
+  <p class="eyebrow">Cómo seguimos</p>
+  <h2>De la demostración al uso real</h2>
+  <div class="camino">
+    <div class="etapa hecho"><div class="n">1</div><div><h3>Probarla</h3><p>Con los usuarios de prueba de la diapositiva siguiente, cada área desde su lugar.</p></div></div>
+    <div class="etapa"><div class="n">2</div><div><h3>El padrón real</h3><p>Pasamos los socios, conexiones y deudas del sistema actual. Primero vemos en qué formato los exporta.</p></div></div>
+    <div class="etapa"><div class="n">3</div><div><h3>Factura electrónica</h3><p>Conectamos con ARCA con el certificado de la cooperativa. En la demo está simulada.</p></div></div>
+    <div class="etapa"><div class="n">4</div><div><h3>Pago online</h3><p>Conectamos el banco que ya usa la cooperativa, con su documentación técnica y credenciales de prueba.</p></div></div>
+    <div class="etapa"><div class="n">5</div><div><h3>Puesta en marcha</h3><p>Publicación, capacitación por área y acompañamiento. Solvix guía cada pantalla y hay manual de uso.</p></div></div>
+  </div>
+  <img class="solvix" src="img/solvix-think.png" alt="" style="right:110px;bottom:110px;width:300px">
+  <div class="pie"><span><b>GestiónCoop</b><span class="punto">.</span></span><span>10</span></div>
+</section>
+
+<!-- ================= 11. USUARIOS DE PRUEBA ================= -->
+<section>
+  <p class="eyebrow">Probala</p>
+  <h2>Usuarios de prueba</h2>
+  <p class="lead" style="font-size:30px">La dirección para entrar va en el mail. Todo lo que se ve son datos de prueba: se puede tocar sin miedo.</p>
+  <table class="usuarios">
+    <tr><th style="width:21%">Área</th><th style="width:23%">Persona de prueba</th><th>Cómo entra</th></tr>
+    <tr><td>Gerencia</td><td>Carlos Giménez</td><td><span class="dato">gerencia@dosdemayo.example</span></td></tr>
+    <tr><td>Facturación</td><td>Silvia Rojas</td><td><span class="dato">facturacion@dosdemayo.example</span></td></tr>
+    <tr><td>Caja</td><td>Claudia Wagner</td><td><span class="dato">caja@dosdemayo.example</span></td></tr>
+    <tr><td>Operario</td><td>Ramón Sosa</td><td><span class="dato">operario@dosdemayo.example</span> · mejor desde el celular</td></tr>
+    <tr><td>Socio</td><td>Marta Benítez</td><td>En «Soy socio»: socio <span class="dato">1043</span> · conexión <span class="dato">1026</span> · DNI <span class="dato">99.658.939</span></td></tr>
+  </table>
+  <p class="nota" style="font-size:26px;color:var(--tinta)">Contraseña del personal: <span class="dato" style="font-size:28px"><b>demo1234</b></span> · el socio no tiene contraseña.</p>
+  <div class="pie"><span><b>GestiónCoop</b><span class="punto">.</span></span><span>11</span></div>
+</section>
+
+<!-- ================= 12. CIERRE ================= -->
+<section class="oscura">
+  <svg class="anillos" viewBox="0 0 600 600" aria-hidden="true">
+    <circle cx="300" cy="300" r="110" fill="none" stroke="#fff" stroke-opacity="0.07" stroke-width="1.5"/>
+    <circle cx="300" cy="300" r="170" fill="none" stroke="#fff" stroke-opacity="0.07" stroke-width="1.5"/>
+    <circle cx="300" cy="300" r="230" fill="none" stroke="#fff" stroke-opacity="0.07" stroke-width="1.5"/>
+    <circle cx="300" cy="300" r="290" fill="none" stroke="#fff" stroke-opacity="0.07" stroke-width="1.5"/>
+    <path d="M130 300 A170 170 0 0 0 300 470" fill="none" stroke="#f6950a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M100.8 415 A230 230 0 0 0 185 499.2" fill="none" stroke="#5aa5fd" stroke-width="5" stroke-linecap="round" stroke-opacity="0.85"/>
+  </svg>
+  <div style="position:absolute;left:120px;top:300px">
+    <h2 style="font-size:120px">Gracias.</h2>
+    <p style="font-size:42px;color:#e6ebf2;margin-top:30px;max-width:1000px;line-height:1.3">Nos encantaría mostrársela en persona y escuchar qué necesita cada área.</p>
+    <p class="producto" style="font-size:64px;font-weight:900;color:#fff;margin-top:70px">GestiónCoop<i>.</i></p>
+    <div style="margin-top:34px"><span class="powered"><img src="img/srv-logo-512.png" alt=""><span>Powered by <b>SRV</b><small>Creada y desarrollada por SRV · wearesrv.com</small></span></span></div>
+  </div>
+  <img class="solvix" src="img/solvix-cheer.png" alt="" style="right:170px;bottom:120px;width:420px">
+  <div class="banda"></div>
+</section>
+</body>
+</html>

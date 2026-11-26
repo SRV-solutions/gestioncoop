@@ -224,6 +224,13 @@ describe('tutoriales con Solvix', () => {
     expect((await (await loginAs('caja@a.test')).get('/api/v1/auth/tutoriales')).body.data).toEqual({ hechos: [], omitidos: [] });
   });
 
+  it('el superadmin también, aunque todavía no haya elegido cooperativa', async () => {
+    const superadmin = await loginAs('super@proveedor.test');
+    expect((await superadmin.get('/api/v1/auth/tutoriales')).body.data).toEqual({ hechos: [], omitidos: [] });
+    expect((await superadmin.put('/api/v1/auth/tutoriales').send({ hechos: ['bienvenida'], omitidos: [] })).status).toBe(200);
+    expect((await superadmin.get('/api/v1/auth/tutoriales')).body.data.hechos).toEqual(['bienvenida']);
+  });
+
   it('pide sesión y no acepta cualquier cosa', async () => {
     expect((await request(app).get('/api/v1/auth/tutoriales')).status).toBe(401);
     expect((await request(app).put('/api/v1/auth/tutoriales').send({ hechos: [], omitidos: [] })).status).toBe(401);

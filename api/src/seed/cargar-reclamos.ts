@@ -75,7 +75,8 @@ export async function cargarReclamos(cooperativaId: number, o: OpcionesReclamos)
     );
     const azar = crearAzar(o.semilla + 606);
     const elegir = <T>(lista: readonly T[]): T => lista[Math.floor(azar.next() * lista.length)]!;
-    const ahora = Date.parse(`${o.hoy}T11:30:00-03:00`);
+    // El mediodía de hoy, o ahora si todavía no llegó (a la madrugada, el mediodía queda en el futuro).
+    const ahora = Math.min(Date.parse(`${o.hoy}T11:30:00-03:00`), Date.now());
 
     const abiertos = Math.round(o.cantidad * 0.25);
     const porEstado = (i: number): EstadoReclamo =>
