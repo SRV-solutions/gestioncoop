@@ -1,0 +1,63 @@
+{
+  "name": "gestioncoop-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GestiónCoop — API (Express + Sequelize + PostgreSQL)",
+  "scripts": {
+    "predev": "node scripts/db.mjs start && sequelize-cli db:migrate && tsx src/seed.ts",
+    "dev": "tsx watch --clear-screen=false src/index.ts",
+    "build": "tsup src/index.ts src/seed.ts --format cjs --target node22 --clean",
+    "start": "node dist/index.js",
+    "db:start": "node scripts/db.mjs start",
+    "db:stop": "node scripts/db.mjs stop",
+    "migrate": "sequelize-cli db:migrate",
+    "migrate:undo": "sequelize-cli db:migrate:undo",
+    "seed": "tsx src/seed.ts",
+    "seed:prod": "node dist/seed.js",
+    "db:reset": "node scripts/db.mjs start && sequelize-cli db:migrate:undo:all && sequelize-cli db:migrate && tsx src/seed.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:motor": "vitest run tests/motor --coverage",
+    "lint": "eslint src tests"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "argon2": "^0.45.2",
+    "cookie-parser": "^1.4.7",
+    "decimal.js": "^10.6.0",
+    "dotenv": "^18.0.10",
+    "exceljs": "^4.4.0",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.5",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "pdfkit": "^0.21.0",
+    "pg": "^8.23.1",
+    "pg-hstore": "^2.3.4",
+    "qrcode": "^1.5.4",
+    "sequelize": "^6.37.8",
+    "sequelize-cli": "^6.6.5",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.20.5",
+    "@types/pdfkit": "^0.17.7",
+    "@types/pg": "^8.23.1",
+    "@types/qrcode": "^1.5.6",
+    "@types/supertest": "^7.2.1",
+    "@vitest/coverage-v8": "^5.1.1",
+    "eslint": "^10.15.0",
+    "supertest": "^7.3.2",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.73.0",
+    "vitest": "^5.1.1"
+  }
+}

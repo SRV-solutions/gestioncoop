@@ -1,0 +1,19 @@
+# Alternativa a la base local automática: PostgreSQL con Docker.
+# Uso (con Docker Desktop abierto, desde la carpeta api): docker compose up -d
+# Usa el mismo puerto y credenciales que api/.env, así que no hay que cambiar nada:
+# `npm run dev` detecta que el puerto 5440 ya está ocupado y no levanta la otra.
+# Para correr los tests hay que crear además la base "coopgestion_test".
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: coopgestion
+      POSTGRES_PASSWORD: coopgestion_dev
+      POSTGRES_DB: coopgestion
+    ports:
+      - '5440:5432'
+    volumes:
+      - coopgestion-pg:/var/lib/postgresql
+volumes:
+  coopgestion-pg:

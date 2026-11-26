@@ -1,0 +1,342 @@
+@import 'tailwindcss';
+
+/*
+ * Sistema visual SRV (wearesrv.com): negro + azul #0B78FB + naranja #F6950A, tipografía del sistema.
+ * Tema claro / oscuro con variables: lib/theme.ts pone data-theme en <html> y todo lo demás sale de acá.
+ * Los componentes usan siempre el token (bg-superficie, text-tinta, border-linea…), nunca un color fijo.
+ * La cooperativa conserva su nombre y su isotipo (con su color); el resto es la marca de la plataforma.
+ */
+:root {
+  color-scheme: light;
+  /* Superficies y texto */
+  --fondo: #f5f6f8;
+  --superficie: #ffffff;
+  --linea: #e3e6eb;
+  /* Borde de los campos de un formulario: tiene que distinguirse del fondo (3 a 1), no como una línea decorativa. */
+  --campo: #7d838c;
+  /* Anillo de foco del teclado. */
+  --foco: #0b6be0;
+  --tinta: #0d0d0d;
+  --tinta-suave: #4a4f57;
+  /* Marca: `marca` es relleno (botones, selección) y siempre lleva texto blanco; `marca-texto` es para letras e íconos. */
+  --marca: #0b6be0;
+  --marca-fuerte: #0957b8;
+  --marca-texto: #0957b8;
+  --marca-claro: #5aa5fd;
+  --marca-tenue: #e7f1ff;
+  --acento: #f6950a;
+  --acento-tenue: #fff0d9;
+  --sobre-acento: #0d0d0d;
+  /* Barras oscuras (menú lateral, cabeceras del celular): negras en los dos temas. */
+  --barra: #0a0a0a;
+  --barra-borde: #0a0a0a;
+  /* Estados */
+  --peligro: #c62828;
+  --peligro-tenue: #fdeaea;
+  --exito: #0f7638;
+  --exito-tenue: #e6f6ec;
+  --alerta: #8a5200;
+  --alerta-tenue: #fff3dd;
+  --sobre-estado: #ffffff;
+  /* Partes de la factura («¿Por qué pago esto?»): fijas por parte, validadas para visión de colores reducida. */
+  --parte-fijo: #2a78d6;
+  --parte-consumo: #1baf7a;
+  --parte-excedente: #eb6834;
+  --parte-impuestos: #6250d6;
+  --parte-adicionales: #eda100;
+  --parte-mora: #e87ba4;
+  /* Series de los gráficos del tablero: mismas dos primeras de la paleta validada (cambian con el tema). */
+  --serie-1: var(--parte-fijo);
+  --serie-2: var(--parte-excedente);
+  /* Grilla y ejes de los gráficos */
+  --grafico-grilla: #e1e0d9;
+  --grafico-eje: #c3c2b7;
+  --grafico-referencia: #52514e;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --fondo: #000000;
+  --superficie: #0f0f10;
+  --linea: #26272b;
+  --campo: #70757d;
+  --foco: #6fb1ff;
+  --tinta: #ffffff;
+  --tinta-suave: #a8adb5;
+  --marca: #0b6be0;
+  --marca-fuerte: #186fe2;
+  --marca-texto: #6fb1ff;
+  --marca-claro: #2f6fc4;
+  --marca-tenue: #0a1c33;
+  --acento: #f6950a;
+  --acento-tenue: #2a1d07;
+  --sobre-acento: #0d0d0d;
+  --barra: #0a0a0a;
+  --barra-borde: #26272b;
+  --peligro: #ff6b6b;
+  --peligro-tenue: #2c1010;
+  --exito: #3ccf7a;
+  --exito-tenue: #0f2a1b;
+  --alerta: #f6b14a;
+  --alerta-tenue: #2a1d07;
+  --sobre-estado: #0d0d0d;
+  --parte-fijo: #3987e5;
+  --parte-consumo: #199e70;
+  --parte-excedente: #d95926;
+  --parte-impuestos: #9085e9;
+  --parte-adicionales: #c98500;
+  --parte-mora: #d55181;
+  --grafico-grilla: #2c2c2a;
+  --grafico-eje: #383835;
+  --grafico-referencia: #c3c2b7;
+}
+
+/* Celulares de pantalla baja: el teclado del operario se compacta para que entre sin tapar nada. */
+@custom-variant bajo (@media (max-height: 800px));
+@custom-variant chico (@media (max-height: 700px));
+
+@theme inline {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --color-fondo: var(--fondo);
+  --color-superficie: var(--superficie);
+  --color-linea: var(--linea);
+  --color-tinta: var(--tinta);
+  --color-tinta-suave: var(--tinta-suave);
+
+  --color-marca: var(--marca);
+  --color-marca-fuerte: var(--marca-fuerte);
+  --color-marca-texto: var(--marca-texto);
+  --color-marca-claro: var(--marca-claro);
+  --color-marca-tenue: var(--marca-tenue);
+  --color-acento: var(--acento);
+  --color-acento-tenue: var(--acento-tenue);
+  --color-sobre-acento: var(--sobre-acento);
+  --color-barra: var(--barra);
+  --color-barra-borde: var(--barra-borde);
+
+  --color-peligro: var(--peligro);
+  --color-peligro-tenue: var(--peligro-tenue);
+  --color-exito: var(--exito);
+  --color-exito-tenue: var(--exito-tenue);
+  --color-alerta: var(--alerta);
+  --color-alerta-tenue: var(--alerta-tenue);
+  --color-sobre-estado: var(--sobre-estado);
+}
+
+@theme {
+  /* `backwards` (y no `both`): al terminar no queda ninguna transformación aplicada. Si quedara, el
+     elemento pasaría a contener a sus hijos `position: fixed` (diálogos, barras) y saldrían mal ubicados. */
+  --animate-aparecer: aparecer 200ms ease-out backwards;
+  --animate-entrar: entrar 180ms ease-out backwards;
+  --animate-latido: latido 1.6s ease-in-out infinite;
+
+  @keyframes aparecer {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes entrar {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes latido {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.45;
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  /* El portal del socio usa letra base de 18 px: gente mayor, celular en la mano. */
+  html.letra-grande {
+    font-size: 112.5%;
+  }
+  body {
+    @apply bg-fondo font-sans text-tinta antialiased;
+    min-height: 100dvh;
+  }
+  #root {
+    min-height: 100dvh;
+  }
+  h1 {
+    letter-spacing: -0.02em;
+  }
+  button,
+  [role='button'],
+  a,
+  summary {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  /* Foco siempre visible al navegar con teclado (accesibilidad AA). */
+  :focus-visible {
+    outline: 3px solid var(--foco);
+    outline-offset: 2px;
+  }
+  /* En los campos, «border-linea» pinta el borde de campo: así todos los formularios cumplen sin tocarlos uno por uno. */
+  input,
+  select,
+  textarea {
+    --linea: var(--campo);
+  }
+  .sobre-oscuro :focus-visible,
+  .sobre-oscuro:focus-visible {
+    outline-color: var(--acento);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Punto naranja de la marca: "CoopGestión." */
+.punto-marca {
+  color: var(--acento);
+}
+
+/* Mapa: marca que late sobre la casa elegida */
+.marca-mapa {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: var(--acento);
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--acento) 75%, transparent);
+  animation: pulso-mapa 1.6s ease-out infinite;
+}
+@keyframes pulso-mapa {
+  to {
+    box-shadow: 0 0 0 22px transparent;
+  }
+}
+
+/* Filas de pestañas: si no entran, se deslizan con el dedo. Sin barra de desplazamiento (ocupa lugar
+   y afea); en el celular, el borde derecho se desvanece para avisar que hay más. */
+[role='tablist'] {
+  scrollbar-width: none;
+}
+[role='tablist']::-webkit-scrollbar {
+  display: none;
+}
+@media (max-width: 639px) {
+  [role='tablist'] {
+    mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
+    /* Lugar para que la última pestaña salga entera de la zona desvanecida. */
+    padding-right: 2rem;
+  }
+}
+
+/* ───────── Solvix, el astronauta de los tutoriales ───────── */
+.solvix { overflow: visible; color: var(--tinta); }
+.solvix * { transform-box: view-box; }
+.solvix-cuerpo { transform-origin: 60px 70px; animation: solvix-flota 3.2s ease-in-out infinite; }
+.solvix-sombra { transform-origin: 60px 134px; animation: solvix-sombra 3.2s ease-in-out infinite; }
+.solvix-ojos { transform-origin: 60px 50px; animation: solvix-parpadea 4.6s infinite; }
+.solvix-antena { animation: solvix-brilla 1.6s ease-in-out infinite; }
+.solvix-luz { animation: solvix-brilla 1.1s ease-in-out infinite; }
+.solvix-brazo-der { transform-origin: 89px 86px; transition: transform 0.3s ease; }
+.solvix-brazo-izq { transform-origin: 31px 86px; transition: transform 0.3s ease; }
+.solvix-cabeza { transform-origin: 60px 82px; }
+.solvix-saluda .solvix-brazo-der { animation: solvix-saluda 1.1s ease-in-out infinite; }
+.solvix-senala .solvix-brazo-der { animation: solvix-senala 1.4s ease-in-out infinite; }
+.solvix-piensa .solvix-brazo-der { transform: rotate(-38deg); }
+.solvix-piensa .solvix-cabeza { animation: solvix-inclina 2.6s ease-in-out infinite; }
+.solvix-festeja .solvix-cuerpo { animation: solvix-salta 0.9s ease-in-out infinite; }
+.solvix-festeja .solvix-brazo-der { animation: solvix-festeja-der 0.45s ease-in-out infinite alternate; }
+.solvix-festeja .solvix-brazo-izq { animation: solvix-festeja-izq 0.45s ease-in-out infinite alternate; }
+@keyframes solvix-flota { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-6px) rotate(2deg); } }
+@keyframes solvix-sombra { 0%, 100% { transform: scaleX(1); opacity: 0.12; } 50% { transform: scaleX(0.8); opacity: 0.07; } }
+@keyframes solvix-parpadea { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.12); } }
+@keyframes solvix-brilla { 50% { opacity: 0.45; } }
+@keyframes solvix-saluda { 0%, 100% { transform: rotate(-150deg); } 50% { transform: rotate(-115deg); } }
+@keyframes solvix-senala { 0%, 100% { transform: rotate(-98deg); } 50% { transform: rotate(-110deg); } }
+@keyframes solvix-inclina { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-8deg); } }
+@keyframes solvix-salta { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-12px) rotate(3deg); } }
+@keyframes solvix-festeja-der { from { transform: rotate(-165deg); } to { transform: rotate(-135deg); } }
+@keyframes solvix-festeja-izq { from { transform: rotate(165deg); } to { transform: rotate(135deg); } }
+/* Con «reducir movimiento», Solvix se queda quieto en su pose. */
+@media (prefers-reduced-motion: reduce) {
+  .solvix * { animation: none !important; }
+  .solvix-saluda .solvix-brazo-der { transform: rotate(-135deg); }
+  .solvix-senala .solvix-brazo-der { transform: rotate(-100deg); }
+  .solvix-festeja .solvix-brazo-der { transform: rotate(-150deg); }
+  .solvix-festeja .solvix-brazo-izq { transform: rotate(150deg); }
+}
+
+/* ───────── Tutorial: foco sobre el elemento y globo de Solvix ───────── */
+/* Por encima de todo, incluidas las ventanas de diálogo. No frena los clics: se puede seguir usando la pantalla. */
+.tour-capa { position: fixed; inset: 0; z-index: 90; pointer-events: none; }
+.tour-velo { position: absolute; inset: 0; background: rgb(5 10 25 / 0.45); animation: entrar 200ms ease-out backwards; }
+.tour-foco {
+  position: fixed;
+  border-radius: 14px;
+  box-shadow: 0 0 0 9999px rgb(5 10 25 / 0.55), 0 0 0 3px var(--acento);
+  transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+.tour-foco::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 18px;
+  border: 2px solid var(--acento);
+  animation: tour-pulso 1.6s ease-out infinite;
+}
+@keyframes tour-pulso { from { opacity: 0.9; transform: scale(1); } to { opacity: 0; transform: scale(1.08); } }
+.tour-globo {
+  position: fixed;
+  pointer-events: auto;
+  max-height: 80dvh;
+  overflow-y: auto;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--linea);
+  background: var(--superficie);
+  box-shadow: 0 18px 50px rgb(0 0 0 / 0.35);
+  /* Solo opacidad: el globo centrado se ubica con transform y un movimiento lo correría. */
+  animation: entrar 200ms ease-out backwards;
+}
+.tour-puntos { display: flex; gap: 4px; justify-content: center; margin: 0.75rem 0 0.625rem; }
+.tour-puntos span { width: 6px; height: 6px; border-radius: 3px; background: var(--campo); transition: width 0.2s ease; }
+.tour-puntos span.activo { width: 16px; background: var(--marca); }
+
+/* Al imprimir (comprobantes, planillas) siempre en claro. */
+@media print {
+  :root,
+  :root[data-theme='dark'] {
+    color-scheme: light;
+    --fondo: #ffffff;
+    --superficie: #ffffff;
+    --linea: #cccccc;
+    --tinta: #000000;
+    --tinta-suave: #333333;
+  }
+}

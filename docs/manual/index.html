@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<title>CoopGestión — Manual de uso</title>
+<link rel="stylesheet" href="manual.css">
+</head>
+<body>
+
+<!-- ================= PORTADA ================= -->
+<div class="cover">
+  <svg class="rings" viewBox="0 0 600 600" aria-hidden="true">
+    <circle cx="300" cy="300" r="110" fill="none" stroke="#fff" stroke-opacity="0.08" stroke-width="1.5"/>
+    <circle cx="300" cy="300" r="170" fill="none" stroke="#fff" stroke-opacity="0.08" stroke-width="1.5"/>
+    <circle cx="300" cy="300" r="230" fill="none" stroke="#fff" stroke-opacity="0.08" stroke-width="1.5"/>
+    <circle cx="300" cy="300" r="290" fill="none" stroke="#fff" stroke-opacity="0.08" stroke-width="1.5"/>
+    <path d="M130 300 A170 170 0 0 0 300 470" fill="none" stroke="#f6950a" stroke-width="5" stroke-linecap="round"/>
+  </svg>
+  <div class="eyebrow">Manual de uso · Noviembre 2026</div>
+  <h1>CoopGestión<i>.</i></h1>
+  <div class="sub">Del medidor a la caja, sin papeles y sin planillas.</div>
+  <div class="group">Cooperativa de Agua, Energía y Otros Servicios Comunitarios de Dos de Mayo Ltda.</div>
+  <img class="solvix" src="img/solvix-wave.png" alt="Solvix, el astronauta de SRV">
+  <div class="meta">Versión de demostración, con datos de prueba.<br>Para la gerencia y el personal de la cooperativa.</div>
+  <div class="band"></div>
+</div>
+
+<!-- ================= ÍNDICE ================= -->
+<section>
+  <div class="eyebrow">Contenido</div>
+  <h2>Qué vas a encontrar</h2>
+  <p class="lead">Este manual explica cómo funciona CoopGestión: qué hay en cada sección, quién puede hacer cada cosa y por dónde se empieza. El paso a paso de cada pantalla lo da Solvix dentro de la app, con sus tutoriales.</p>
+  <div class="toc">
+    <ol>
+      <li>Qué es CoopGestión<span>Para qué sirve y qué tiene cargado</span></li>
+      <li>Cómo entrar<span>Socios, personal y usuarios de la demostración</span></li>
+      <li>Quién ve qué<span>Los roles y sus pantallas</span></li>
+      <li>El portal del socio<span>Deuda, facturas, pago, consumo y reclamos</span></li>
+      <li>Lecturas en la calle<span>El celular del operario y el control en la oficina</span></li>
+      <li>Facturación<span>Del cierre de lecturas a la emisión</span></li>
+      <li>Caja<span>Cobrar en el mostrador y cerrar con arqueo</span></li>
+      <li>Reclamos y cortes programados<span>Del aviso del vecino a la cuadrilla</span></li>
+      <li>Tablero e informes<span>Los números del mes y las planillas</span></li>
+      <li>Mapa<span>Deuda, lecturas en vivo y áreas</span></li>
+      <li>Padrón, tarifas y la cooperativa<span>Socios, precios, usuarios e imagen</span></li>
+      <li>Solvix y los tutoriales<span>La ayuda dentro de la app</span></li>
+      <li>Cuidado de los datos<span>Permisos, auditoría y sesiones</span></li>
+      <li>Qué es de prueba en esta versión<span>Lo simulado y lo que falta</span></li>
+      <li>Preguntas frecuentes<span>Lo que más se consulta</span></li>
+      <li>Anexo: usuarios de la demostración<span>Con qué datos entrar a probar</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ================= 1 ================= -->
+<section class="chapter">
+  <div class="eyebrow">1</div>
+  <h2>Qué es CoopGestión</h2>
+  <p class="lead">Es una plataforma web para cooperativas de servicios públicos. Junta en un solo lugar lo que hoy está repartido entre el sistema de facturación, las planillas, el papel del lecturista y la caja.</p>
+  <p>Se usa desde el navegador de la computadora o del celular, sin instalar nada. Cada persona entra y ve solo lo suyo: el vecino consulta y paga, el lecturista carga lecturas en la calle, la caja cobra, facturación emite y gerencia mira el resultado.</p>
+  <div class="grid2">
+    <div class="card"><h4>Para el socio</h4><p>Cuánto debe, sus facturas con la explicación de cada importe, el pago desde el celular, su consumo y sus reclamos.</p></div>
+    <div class="card"><h4>Para el operario</h4><p>Su ruta del día, una casa por pantalla, teclado grande y funcionamiento sin señal.</p></div>
+    <div class="card"><h4>Para la oficina</h4><p>Control de lecturas, facturación en cuatro pasos, caja con arqueo, reclamos y cortes programados.</p></div>
+    <div class="card"><h4>Para la gerencia</h4><p>Tablero del mes, balance de energía, informes para bajar y el mapa con la deuda casa por casa.</p></div>
+  </div>
+  <h3>El circuito de un mes</h3>
+  <div class="flow">
+    <span class="pill on">Lectura</span><span class="arrow">→</span>
+    <span class="pill on">Control</span><span class="arrow">→</span>
+    <span class="pill on">Facturación</span><span class="arrow">→</span>
+    <span class="pill on">Cobro</span><span class="arrow">→</span>
+    <span class="pill on">Tablero</span>
+  </div>
+  <p>Lo que carga el operario llega solo a la oficina. La oficina controla, calcula las pre-facturas, revisa las que llaman la atención y emite. El socio ve su factura en el momento y la paga desde el celular o en el mostrador. Todo eso aparece en el tablero y en el mapa.</p>
+  <h3>Lo que tiene cargado esta versión</h3>
+  <table>
+    <tr><th style="width:36%">Dato</th><th>Detalle</th></tr>
+    <tr><td>2.000 conexiones y 1.864 socios</td><td>Padrón de prueba sobre las calles reales de Dos de Mayo: 6 zonas urbanas y 4 rurales, cada una con su ruta de lectura.</td></tr>
+    <tr><td>Servicios</td><td>Energía, agua, internet, TV, sepelio y gas envasado.</td></tr>
+    <tr><td>12 meses de historia</td><td>Lecturas, unas 49.000 facturas y 21.000 pagos, para que el tablero y el consumo tengan qué mostrar.</td></tr>
+    <tr><td>El mes en curso</td><td>A medio leer (cerca del 85 %), listo para controlar, facturar y cobrar durante la demostración.</td></tr>
+    <tr><td>Reclamos y cortes</td><td>60 reclamos con su historial y cortes programados para los próximos días.</td></tr>
+    <tr><td>Tarifas</td><td>La estructura sale de dos facturas de la cooperativa. Hay valores ilustrativos: se confirman al cargar los cuadros vigentes.</td></tr>
+  </table>
+  <div class="tip ojo"><b>Todas las personas son inventadas.</b> Nombres, documentos, teléfonos, deudas y consumos son de prueba. Lo único real son las calles y la estructura de las tarifas.</div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="chapter">
+  <div class="eyebrow">2</div>
+  <h2>Cómo entrar</h2>
+  <p class="lead">La pantalla de ingreso tiene dos entradas: una para el socio y otra para quien trabaja en la cooperativa. La app recuerda cuál usaste la última vez.</p>
+  <figure class="shot"><img src="img/shot-ingreso.jpg" alt="Pantalla de ingreso"><figcaption>La pantalla de ingreso, con la cuenta que ya se abrió en ese dispositivo.</figcaption></figure>
+  <h3>Soy socio</h3>
+  <p>El socio <b>no tiene usuario ni contraseña</b>. Entra con tres datos que están en su factura, igual que en la consulta que la cooperativa ya usa:</p>
+  <ol>
+    <li><b>Código de socio</b> (en la factura, «Socio N°»).</li>
+    <li><b>Número de conexión</b> («Conexión N°», debajo del nombre).</li>
+    <li><b>DNI, CUIT o CUIL</b> del titular. Se puede escribir con o sin puntos y guiones, y vale el CUIL de quien figura con DNI.</li>
+  </ol>
+  <ul>
+    <li><b>La cuenta queda abierta 3 meses</b> en ese celular o computadora. Cada vez que se usa, el plazo vuelve a contar.</li>
+    <li><b>Salir:</b> tocando el círculo con las iniciales, arriba a la derecha, y «Salir».</li>
+    <li><b>Ver otra cuenta:</b> en ese mismo menú. Sirve para mirar la cuenta de un familiar o la del negocio desde el mismo dispositivo.</li>
+    <li>Las cuentas que ya se abrieron quedan en la pantalla de ingreso: se toca el nombre y solo falta escribir el documento. Se guardan el nombre, el código de socio y la conexión; <b>el documento no se guarda nunca</b>. Con la «×» se quitan.</li>
+  </ul>
+  <div class="tip ojo"><b>En un dispositivo compartido,</b> conviene salir al terminar: la cuenta queda abierta para quien lo use después.</div>
+  <h3>Trabajo en la cooperativa</h3>
+  <p>El personal entra con su <b>email y su contraseña</b>. La sesión dura 30 días sin usarse. Después de varios intentos fallidos seguidos, el ingreso se frena unos minutos.</p>
+  <h3>Modo demo</h3>
+  <p>Mientras la plataforma está en demostración, la pantalla de ingreso muestra botones para entrar como cada rol sin escribir nada, y un selector para cambiar a la segunda cooperativa de ejemplo. Los datos para entrar a mano están en el anexo.</p>
+  <h3>Tenerla como una app</h3>
+  <ul>
+    <li><b>Android (Chrome):</b> menú ⋮ → <i>Agregar a la pantalla principal</i>.</li>
+    <li><b>iPhone (Safari):</b> botón Compartir → <i>Agregar a inicio</i>.</li>
+  </ul>
+  <p>Esto funciona cuando la plataforma está publicada en internet. En la demostración local se muestra desde el navegador de la computadora.</p>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="chapter">
+  <div class="eyebrow">3</div>
+  <h2>Quién ve qué</h2>
+  <p class="lead">Cada persona ve las secciones de su rol. Los permisos se controlan en el servidor: esconder un botón no es la protección, es solo la comodidad.</p>
+  <table>
+    <tr><th style="width:24%">Rol</th><th>Para quién es</th><th style="width:40%">Qué hace</th></tr>
+    <tr><td><b>Socio</b></td><td>Cada vecino con un servicio.</td><td>Ve y paga sus facturas, mira su consumo, reclama y actualiza sus datos de contacto.</td></tr>
+    <tr><td><b>Operario</b></td><td>Lecturistas y cuadrillas.</td><td>Carga las lecturas de sus rutas desde el celular.</td></tr>
+    <tr><td><b>Caja</b></td><td>Quien atiende el mostrador.</td><td>Abre su caja, cobra, imprime recibos y cierra con arqueo. Consulta el padrón.</td></tr>
+    <tr><td><b>Facturación</b></td><td>El área que emite.</td><td>Controla lecturas, pre-factura, revisa y emite. Consulta tarifas, informes y mapa.</td></tr>
+    <tr><td><b>Gerencia</b></td><td>Gerencia y presidencia.</td><td>Tablero, informes y mapa. Mira facturación, caja y reclamos. Cambia la imagen de la cooperativa.</td></tr>
+    <tr><td><b>Administración</b></td><td>Quien administra el sistema.</td><td>Todo lo anterior, y además cambia tarifas, atiende reclamos, carga cortes, anula cobros y ve los usuarios.</td></tr>
+  </table>
+  <h3>Pantalla por pantalla</h3>
+  <table>
+    <tr><th>Sección</th><th class="c">Caja</th><th class="c">Facturación</th><th class="c">Gerencia</th><th class="c">Administración</th></tr>
+    <tr><td>Tablero</td><td class="no">—</td><td class="no">—</td><td class="si">Sí</td><td class="si">Sí</td></tr>
+    <tr><td>Mapa</td><td class="no">—</td><td class="si">Sí</td><td class="si">Sí</td><td class="si">Sí</td></tr>
+    <tr><td>Padrón</td><td class="si">Sí</td><td class="si">Sí</td><td class="si">Sí</td><td class="si">Sí</td></tr>
+    <tr><td>Tarifas</td><td class="no">—</td><td class="si">Mira</td><td class="si">Mira</td><td class="si">Cambia</td></tr>
+    <tr><td>Lecturas</td><td class="no">—</td><td class="si">Sí</td><td class="si">Sí</td><td class="si">Sí</td></tr>
+    <tr><td>Facturación</td><td class="no">—</td><td class="si">Opera</td><td class="si">Mira</td><td class="si">Opera</td></tr>
+    <tr><td>Caja</td><td class="si">Cobra</td><td class="no">—</td><td class="si">Mira</td><td class="si">Cobra</td></tr>
+    <tr><td>Reclamos</td><td class="no">—</td><td class="no">—</td><td class="si">Mira</td><td class="si">Atiende</td></tr>
+    <tr><td>Informes</td><td class="no">—</td><td class="si">Sí</td><td class="si">Sí</td><td class="si">Sí</td></tr>
+    <tr><td>Usuarios</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="si">Sí</td></tr>
+    <tr><td>Cooperativa (imagen)</td><td class="no">—</td><td class="no">—</td><td class="si">Sí</td><td class="si">Sí</td></tr>
+  </table>
+  <p>Una persona puede tener más de un rol. En ese caso, el menú de su usuario le deja pasar de un área a otra.</p>
+  <div class="tip"><b>Si no ves algo que necesitás:</b> es por el rol, no un error. Lo resuelve administración.</div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="chapter">
+  <div class="eyebrow">4</div>
+  <h2>El portal del socio</h2>
+  <p class="lead">Pensado primero para el celular y para gente mayor: letra grande, botones grandes, cuatro secciones y nunca más de dos pantallas de profundidad.</p>
+  <figure class="phones" style="width:74%">
+    <img src="img/cel-inicio.jpg" alt="Inicio del socio">
+    <img src="img/cel-factura.jpg" alt="Explicación de una factura">
+    <img src="img/cel-consumo.jpg" alt="Consumo del socio">
+    <figcaption>Inicio, la explicación de una factura y el consumo (datos de prueba).</figcaption>
+  </figure>
+  <h3>Inicio</h3>
+  <p>Dice en grande <b>cuánto debe</b> o que <b>está al día</b>, con el botón para pagar. Debajo aparecen los cortes programados en su zona y sus reclamos en curso.</p>
+  <h3>Facturas</h3>
+  <p>Todas las facturas de todos sus servicios, con su estado y el PDF para descargar. Cada una tiene <b>«¿Por qué pago esto?»</b>: una barra que muestra en qué se va la plata (cuota fija, consumo con subsidio, consumo sin subsidio, impuestos, adicionales e intereses) y frases cortas que lo explican, por ejemplo cuánto consumió por encima del tope subsidiado.</p>
+  <h3>Pagar</h3>
+  <ol>
+    <li>Toca <b>Pagar</b> y elige qué facturas quiere pagar.</li>
+    <li>Ve el total exacto en el botón, antes de confirmar.</li>
+    <li>Pasa por la pasarela del banco y vuelve con el recibo y con lo que le queda por pagar.</li>
+  </ol>
+  <p>También se puede pagar <b>con el QR de la factura de papel</b>, sin entrar a ninguna cuenta: muestra solo lo justo para reconocer la factura, sin nombres ni domicilios.</p>
+  <h3>Consumo</h3>
+  <p>Los últimos 12 meses de energía y agua, comparados con el mes anterior y con el promedio de su zona.</p>
+  <h3>Más</h3>
+  <ul>
+    <li><b>Reclamos:</b> avisa un problema en pocos toques, con foto y ubicación, y sigue cómo va.</li>
+    <li><b>Mis pagos:</b> sus recibos, para descargar.</li>
+    <li><b>Mis conexiones:</b> sus domicilios, servicios y medidores.</li>
+    <li><b>Sepelio:</b> las personas adheridas a su servicio.</li>
+    <li><b>Mis datos:</b> su email, su celular y la adhesión a la factura digital.</li>
+  </ul>
+  <div class="tip solvix"><img src="img/solvix-point.png" alt=""><div><b>Tutoriales:</b> «Primeros pasos», «Ver y pagar tus facturas» y «Consumo, reclamos y otras cuentas».</div></div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="chapter">
+  <div class="eyebrow">5</div>
+  <h2>Lecturas en la calle</h2>
+  <p class="lead">El operario trabaja con su celular: una casa por pantalla, botones grandes, se usa con una mano. Si no hay señal, no se pierde nada.</p>
+  <figure class="phones" style="width:84%; grid-template-columns:repeat(4,1fr); gap:4mm">
+    <img src="img/cel-rutas.jpg" alt="Rutas del operario">
+    <img src="img/cel-recorrido.jpg" alt="Una ruta con el recorrido armado">
+    <img src="img/cel-mapa-ruta.jpg" alt="El recorrido en el mapa">
+    <img src="img/cel-casa.jpg" alt="Carga de una lectura">
+    <figcaption>«Mi ruta de hoy», una ruta con su recorrido, el recorrido en el mapa y la carga de una lectura.</figcaption>
+  </figure>
+  <h3>En el celular</h3>
+  <ul>
+    <li><b>Mi ruta de hoy:</b> sus rutas, con cuántos medidores lleva y cuántos le faltan. Son las mismas cuentas que ve la oficina. Toca una y sigue donde quedó.</li>
+    <li><b>Recorrido:</b> las casas vienen en el orden que cargó la oficina. Tocando «Recorrido», el operario le dice a la app de dónde sale —de donde está parado, de una calle o de una casa— y la app ordena lo que falta para caminar menos. Antes de aceptarlo ve cuántos kilómetros son y cuánto se ahorra. Puede pedir que termine cerca de donde empieza, y volver al orden de la oficina cuando quiera.</li>
+    <li><b>Mapa de la ruta:</b> dibuja el recorrido que falta con el número de paso de cada casa, marca cuál sigue y a cuántos metros está, y cuántas casas y kilómetros quedan.</li>
+    <li><b>Una casa por pantalla:</b> dirección, titular, medidor, lectura anterior y consumo promedio. Al confirmar, pasa sola al otro medidor de la casa o a la casa siguiente.</li>
+    <li><b>Avisos en el momento:</b> si la lectura es menor a la anterior, pide elegir entre vuelta de contador o cambio de medidor. Si el consumo da mucho más alto o mucho más bajo que lo habitual, pide confirmar y sacar una foto.</li>
+    <li><b>«No pude leer / novedad»:</b> medidor roto, sin acceso, perro, casa cerrada, posible fraude o pérdida visible, con foto y nota.</li>
+    <li><b>Búsqueda</b> por medidor, dirección o titular.</li>
+  </ul>
+  <div class="tip ojo"><b>El recorrido es en línea recta.</b> La app no conoce los arroyos, los alambrados ni el sentido de las calles: da un buen orden para caminar, no el camino exacto. El operario siempre puede abrir la casa que quiera.</div>
+  <h3>Sin señal</h3>
+  <p>La barra de arriba dice siempre si hay señal y cuántas lecturas faltan enviar. Sin señal, cada lectura se guarda en el teléfono y sale sola cuando vuelve la conexión. Reintentar nunca duplica una lectura.</p>
+  <h3>En la oficina</h3>
+  <p>La sección <b>Lecturas</b> muestra el avance por ruta, que se actualiza solo: medidores leídos, casas terminadas y lo que falta. Desde ahí se revisan las lecturas que llamaron la atención, se ven las novedades con su foto y se estiman los medidores sin leer con el promedio de seis meses.</p>
+  <p><b>Para pasarle una ruta a otro operario</b> se elige su nombre en la lista. Al lado de cada nombre figura cuánto tiene a cargo («2 rutas, le faltan 92 medidores»), que es lo que esa persona ve en su teléfono. La ruta le aparece sola, con lo que ya estaba leído, y deja de aparecerle al anterior.</p>
+  <div class="tip solvix"><img src="img/solvix-point.png" alt=""><div><b>Tutorial:</b> «Cargar lecturas en la calle».</div></div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="chapter">
+  <div class="eyebrow">6</div>
+  <h2>Facturación</h2>
+  <p class="lead">Un asistente de cuatro pasos, uno por decisión. Nada se emite a ciegas: primero la pre-factura, después lo raro, después todo junto.</p>
+  <figure class="shot narrow"><img src="img/shot-facturacion.jpg" alt="Asistente de facturación"><figcaption>El paso «Controlar lecturas» del asistente.</figcaption></figure>
+  <table>
+    <tr><th style="width:27%">Paso</th><th>Qué se hace</th></tr>
+    <tr><td><b>1. Abrir la lectura</b></td><td>Se abre el mes (energía y agua juntas) y las rutas aparecen en el teléfono de los operarios.</td></tr>
+    <tr><td><b>2. Controlar lecturas</b></td><td>Cuántos medidores faltan, cuáles dieron menos que la anterior sin aclarar y qué quedó sin revisar. Lo que falta se puede estimar de una vez. No deja cerrar con medidores sin resolver.</td></tr>
+    <tr><td><b>3. Pre-facturar y revisar</b></td><td>Se calcula la factura de cada servicio de cada conexión, todavía sin número. El sistema separa las raras: las que cambiaron más del 50 % contra el mes anterior, las de importe cero y las de medidores sin lectura. Se abren una por una, con el cálculo renglón por renglón.</td></tr>
+    <tr><td><b>4. Emitir</b></td><td>Cada factura toma su número, su fecha y su vencimiento. La deuda queda cargada y el socio la ve en el momento.</td></tr>
+  </table>
+  <h3>Reglas que conviene conocer</h3>
+  <ul>
+    <li><b>Una factura emitida no se edita.</b> Si estuvo mal, se anula con una nota de crédito por el total (solo si no tiene pagos), y queda registrado quién lo hizo.</li>
+    <li><b>Numeración correlativa, sin huecos,</b> por tipo de comprobante, letra y punto de venta.</li>
+    <li><b>Mora:</b> una factura vencida e impaga suma su interés en la factura siguiente del mismo servicio. En la caja no se cobra recargo: se cobra lo que dice la factura.</li>
+    <li><b>Si la emisión se corta,</b> se vuelve a tocar «Emitir» y sigue desde donde quedó, sin repetir ni saltear números.</li>
+    <li><b>El PDF</b> tiene el mismo formato que la factura de papel: lecturas, gráfico de consumo, detalle del cálculo, código de barras y QR.</li>
+  </ul>
+  <p>En la pestaña <b>Comprobantes</b> se busca cualquier factura, se ve su detalle y los pagos que recibió.</p>
+  <div class="tip solvix"><img src="img/solvix-think.png" alt=""><div><b>Tutorial:</b> «Facturar el mes».</div></div>
+</section>
+
+<!-- ================= 7 ================= -->
+<section class="chapter">
+  <div class="eyebrow">7</div>
+  <h2>Caja</h2>
+  <p class="lead">Pensada para usarse sin el mouse: búsqueda, cobro, vuelto y recibo en segundos. Al cerrar, el arqueo sale solo.</p>
+  <ol>
+    <li><b>Abrir la caja</b> con el efectivo que hay en el cajón (fondo inicial). Hay una sola abierta por cajero.</li>
+    <li><b>Buscar</b> en un solo campo: nombre, documento, número de socio, de conexión o de medidor, o el <b>código de barras</b> de la factura con el lector.</li>
+    <li><b>Cobrar:</b> llega todo lo que debe ya marcado, de lo más viejo a lo más nuevo. Se escribe con cuánto paga y aparece el vuelto. Para un pago parcial se escribe el importe y se aplica desde la factura más vieja.</li>
+    <li><b>Recibo:</b> queda listo para imprimir, en ticket de 80 mm o en A4.</li>
+    <li><b>Cerrar con arqueo:</b> el sistema dice cuánto efectivo tiene que haber y se carga lo contado. Si no coincide, hay que escribir qué pasó; la diferencia queda guardada.</li>
+  </ol>
+  <h3>Atajos del teclado</h3>
+  <table>
+    <tr><th style="width:26%">Tecla</th><th>Qué hace</th></tr>
+    <tr><td><span class="kbd">F2</span></td><td>Vuelve al buscador y arranca un cobro nuevo.</td></tr>
+    <tr><td><span class="kbd">↑</span> <span class="kbd">↓</span> <span class="kbd">Enter</span></td><td>Elegir un socio de la lista y abrirlo.</td></tr>
+    <tr><td><span class="kbd">Tab</span> <span class="kbd">Espacio</span></td><td>Moverse entre las facturas y marcarlas o desmarcarlas.</td></tr>
+    <tr><td><span class="kbd">E</span> <span class="kbd">T</span> <span class="kbd">D</span> <span class="kbd">C</span> <span class="kbd">Q</span></td><td>Medio de pago: efectivo, transferencia, débito, crédito, QR.</td></tr>
+    <tr><td><span class="kbd">G</span></td><td>Abrir o cerrar «Gas y otros conceptos».</td></tr>
+    <tr><td><span class="kbd">Enter</span></td><td>Cobrar. Después del cobro, pasar al siguiente.</td></tr>
+    <tr><td><span class="kbd">F4</span></td><td>Venta de mostrador a alguien que no es socio.</td></tr>
+    <tr><td><span class="kbd">Esc</span></td><td>Cancelar el cobro.</td></tr>
+  </table>
+  <h3>Lo que protege la plata</h3>
+  <ul>
+    <li><b>Nada se cobra dos veces:</b> si dos cajeros cobran la misma factura a la vez, cobra uno y al otro le avisa. Un doble Enter devuelve el mismo recibo.</li>
+    <li><b>Los cobros no se editan ni se borran.</b> Anular un cobro lo puede hacer solo administración, con motivo: las facturas vuelven a deberse y todo queda en la auditoría.</li>
+    <li>Gerencia ve las cajas de cada cajero, con sus cobros y su arqueo, sin poder cobrar.</li>
+  </ul>
+  <div class="tip solvix"><img src="img/solvix-point.png" alt=""><div><b>Tutorial:</b> «Cobrar en el mostrador».</div></div>
+</section>
+
+<!-- ================= 8 ================= -->
+<section class="chapter">
+  <div class="eyebrow">8</div>
+  <h2>Reclamos y cortes programados</h2>
+  <p class="lead">El vecino avisa desde su celular y sigue el reclamo paso a paso. La oficina ve primero lo urgente y lo más viejo.</p>
+  <h3>El reclamo del socio</h3>
+  <p>Elige el servicio, cuenta qué pasa con sus palabras, suma una foto y su ubicación. Cuando corresponde, antes de enviar recibe un consejo («fijate si saltó la llave térmica»). Después ve cada paso que la cooperativa deja visible, sin los nombres del personal.</p>
+  <h3>La oficina</h3>
+  <ul>
+    <li>Toma reclamos por teléfono o en el mostrador, a nombre del socio.</li>
+    <li>Asigna la cuadrilla, lo marca en curso y lo resuelve contando qué se hizo.</li>
+    <li>Cada paso queda en el historial y genera un aviso para el socio.</li>
+    <li>Hay notas internas, que el socio no ve.</li>
+    <li>Desde un reclamo se puede saltar a esa casa en el mapa.</li>
+  </ul>
+  <h3>Cortes programados</h3>
+  <p>Se cargan por zona o para toda la localidad, con día, horario y motivo. El socio de esa zona con ese servicio lo ve en su inicio, y en el mapa aparece el área afectada. Un corte se puede cancelar.</p>
+  <div class="tip ojo"><b>El sistema nunca corta un servicio solo.</b> El informe de cortes sugeridos (socios con dos o más facturas vencidas) es una lista para que decida una persona.</div>
+</section>
+
+<!-- ================= 9 ================= -->
+<section class="chapter">
+  <div class="eyebrow">9</div>
+  <h2>Tablero e informes</h2>
+  <p class="lead">El tablero muestra un mes. Se elige el mes, el servicio o la zona, y todo lo de abajo se recalcula. Cada número se abre hasta el detalle.</p>
+  <figure class="shot narrow"><img src="img/shot-solvix.jpg" alt="Tablero con Solvix"><figcaption>El tablero de gerencia, con Solvix presentando el menú.</figcaption></figure>
+  <table>
+    <tr><th style="width:26%">Indicador</th><th>Qué mide</th></tr>
+    <tr><td><b>Facturado</b></td><td>Las facturas emitidas de ese mes.</td></tr>
+    <tr><td><b>Cobrado</b></td><td>Lo que ya se cobró de esas facturas, se haya cobrado cuando se haya cobrado.</td></tr>
+    <tr><td><b>Cobrabilidad</b></td><td>Cobrado sobre facturado. Los meses más nuevos tienen más por cobrar.</td></tr>
+    <tr><td><b>Deuda total</b></td><td>El saldo de todas las facturas impagas, al día de hoy.</td></tr>
+    <tr><td><b>Recaudación</b></td><td>La plata que entró en ese mes calendario, por la caja y por el pago online, día por día.</td></tr>
+    <tr><td><b>Balance de energía</b></td><td>Lo que entró a la red (comprado y generado) contra lo facturado. La diferencia son las pérdidas. Lo que entró lo carga administración.</td></tr>
+  </table>
+  <h3>Informes</h3>
+  <p>Cada informe se mira en pantalla y se baja en <b>Excel, CSV o PDF</b>. Cada descarga queda en la auditoría.</p>
+  <table>
+    <tr><th style="width:30%">Informe</th><th>Para qué sirve</th></tr>
+    <tr><td>Deuda por socio</td><td>Quién debe, cuánto y desde cuándo, con totales.</td></tr>
+    <tr><td>Cortes sugeridos</td><td>Socios con dos o más facturas vencidas, para decidir a quién se le corta.</td></tr>
+    <tr><td>Libro de ventas</td><td>Los comprobantes emitidos en un período.</td></tr>
+    <tr><td>Recaudación</td><td>Lo cobrado, por día y por medio de pago.</td></tr>
+    <tr><td>Lecturas</td><td>El avance y el resultado de la lectura de un mes.</td></tr>
+    <tr><td>Consumos por zona</td><td>Cuánto consume cada barrio o paraje.</td></tr>
+    <tr><td>Padrón</td><td>Socios, conexiones y servicios.</td></tr>
+  </table>
+  <div class="tip solvix"><img src="img/solvix-think.png" alt=""><div><b>Tutorial:</b> «El tablero y los informes».</div></div>
+</section>
+
+<!-- ================= 10 ================= -->
+<section class="chapter">
+  <div class="eyebrow">10</div>
+  <h2>Mapa</h2>
+  <p class="lead">Dos de Mayo casa por casa, en 3D y con la hora real: de día se ve de día y de noche, con las casas iluminadas.</p>
+  <figure class="shot narrow"><img src="img/shot-mapa.jpg" alt="Mapa de conexiones"><figcaption>El mapa con la situación de cada conexión y los cortes programados.</figcaption></figure>
+  <h3>Qué se puede mirar</h3>
+  <ul>
+    <li><b>Deuda:</b> cada casa toma un color según cómo está con el servicio elegido:
+      <span class="dot" style="background:#1f9d55"></span>al día,
+      <span class="dot" style="background:#f0a030"></span>con deuda,
+      <span class="dot" style="background:#d64545"></span>en mora (dos o más facturas vencidas),
+      <span class="dot" style="background:#6b7280"></span>cortado y
+      <span class="dot" style="background:#c3c8d0"></span>de baja.
+      Tocando un color de la leyenda, se apaga o se vuelve a prender.</li>
+    <li><b>Lecturas en vivo:</b> las casas leídas y las que faltan. Cuando un operario carga una lectura, esa casa cambia a los pocos segundos.</li>
+    <li><b>Capas:</b> relieve, zonas, rutas de lectura, reclamos abiertos, cortes programados y mapas de calor de deuda o de consumo.</li>
+    <li><b>Filtros:</b> por zona, categoría, ruta y rango de consumo.</li>
+  </ul>
+  <h3>Qué se puede hacer</h3>
+  <ul>
+    <li><b>Buscar</b> un socio, una dirección o un medidor.</li>
+    <li><b>Tocar una casa</b> para abrir su ficha: titular, servicios, deuda y última lectura. Desde ahí se carga un reclamo para esa casa.</li>
+    <li><b>Dibujar un área:</b> se marca un barrio con unos clics y se cierra con doble clic. Muestra cuántas conexiones hay, cuánto deben y cuánto consumen, y deja bajar la lista.</li>
+    <li><b>Mover la hora</b> o recorrer el día completo, y <b>sobrevolar</b> el pueblo.</li>
+  </ul>
+  <p>En el celular, la hora y la leyenda arrancan plegadas para dejar el mapa a la vista: se abren con un toque.</p>
+  <div class="tip">El mapa necesita internet: las calles y el relieve se bajan de servidores públicos. El tablero y los informes no lo necesitan.</div>
+  <div class="tip solvix"><img src="img/solvix-point.png" alt=""><div><b>Tutorial:</b> «El mapa».</div></div>
+</section>
+
+<!-- ================= 11 ================= -->
+<section class="chapter">
+  <div class="eyebrow">11</div>
+  <h2>Padrón, tarifas y la cooperativa</h2>
+  <h3>Padrón</h3>
+  <p>Socios, conexiones y servicios. Se busca por nombre, DNI, número de socio, medidor o dirección, y se filtra por zona. La ficha de cada socio reúne sus datos, sus conexiones, sus servicios y sus medidores.</p>
+  <h3>Tarifas</h3>
+  <ul>
+    <li><b>Cuadros tarifarios:</b> cuota fija y escalones por servicio y categoría. Un cuadro no se edita: «Nueva versión» crea otro que rige desde una fecha y cierra el anterior. El historial queda.</li>
+    <li><b>Impuestos y cargos:</b> porcentajes, montos fijos o montos por unidad consumida, por servicio, categoría y condición frente al IVA.</li>
+    <li><b>Planes y mora:</b> abonos de internet y TV, interés diario, vencimientos y la regla del corte sugerido.</li>
+    <li><b>Simulador:</b> arma una factura con las tarifas cargadas, sin guardar nada.</li>
+  </ul>
+  <p>Una tarifa nueva no puede regir desde un mes que ya se facturó. Solo administración cambia tarifas, y cada cambio queda en la auditoría.</p>
+  <h3>Usuarios</h3>
+  <p>Administración ve quién puede entrar al sistema, con qué rol, si está activo y cuándo entró por última vez. Los socios no aparecen como usuarios con contraseña: entran con los datos de su factura.</p>
+  <h3>La imagen de la cooperativa</h3>
+  <p>En <b>Cooperativa</b>, gerencia y administración cargan el logo o una foto de la cooperativa:</p>
+  <ol>
+    <li>Tocar <b>Subir imagen</b> (o <b>Cambiar imagen</b>) y elegir un archivo JPG, PNG o WebP.</li>
+    <li>La app la recorta en cuadrado, tomando el centro, y muestra cómo va a quedar.</li>
+    <li>Tocar <b>Guardar</b>.</li>
+  </ol>
+  <p>La imagen aparece en el momento en la pantalla de ingreso y arriba de cada pantalla, para socios y personal. Con <b>Quitar</b> vuelven las iniciales. Cada cambio queda en la auditoría.</p>
+  <div class="tip"><b>Conviene una imagen cuadrada</b> o con lo importante en el centro, porque se muestra chica.</div>
+  <div class="tip solvix"><img src="img/solvix-point.png" alt=""><div><b>Tutorial:</b> «Padrón, usuarios y reclamos».</div></div>
+</section>
+
+<!-- ================= 12 ================= -->
+<section class="chapter">
+  <div class="eyebrow">12</div>
+  <h2>Solvix y los tutoriales</h2>
+  <p class="lead">Solvix es el astronauta de SRV. Vive dentro de la app y muestra dónde tocar para hacer cada cosa, sobre la pantalla real.</p>
+  <div class="grid2">
+    <div class="card"><h4>Se presenta solo</h4><p>La primera vez que alguien entra, Solvix hace un recorrido corto: el menú, el usuario y dónde volver a encontrarlo.</p></div>
+    <div class="card"><h4>Señala y explica</h4><p>Cada paso lleva a la pantalla que corresponde e ilumina el elemento del que habla.</p></div>
+    <div class="card"><h4>De a poco</h4><p>Al terminar un tutorial, ofrece el siguiente que le sirve a ese rol.</p></div>
+    <div class="card"><h4>Nunca obliga</h4><p>Se puede omitir en cualquier momento y retomar después. La pantalla se sigue pudiendo usar mientras tanto.</p></div>
+  </div>
+  <h3>Dónde están</h3>
+  <p>Tocando el usuario (el círculo con las iniciales) → <b>Tutoriales</b>. La lista muestra cuáles hiciste, cuáles omitiste y cuáles son nuevos, con un botón para verlos o repasarlos. El avance se guarda en la cuenta: no se repite la presentación en cada dispositivo. «Empezar de cero» lo borra.</p>
+  <table>
+    <tr><th style="width:38%">Tutorial</th><th>Para quién</th></tr>
+    <tr><td>Primeros pasos</td><td>Todos.</td></tr>
+    <tr><td>Ver y pagar tus facturas</td><td>Socio.</td></tr>
+    <tr><td>Consumo, reclamos y otras cuentas</td><td>Socio.</td></tr>
+    <tr><td>Cargar lecturas en la calle</td><td>Operario.</td></tr>
+    <tr><td>Cobrar en el mostrador</td><td>Caja.</td></tr>
+    <tr><td>Padrón, usuarios y reclamos</td><td>Administración.</td></tr>
+    <tr><td>El tablero y los informes</td><td>Gerencia y administración.</td></tr>
+    <tr><td>Facturar el mes</td><td>Facturación, gerencia y administración.</td></tr>
+    <tr><td>El mapa</td><td>Facturación, gerencia y administración.</td></tr>
+  </table>
+  <div class="tip solvix"><img src="img/solvix-cheer.png" alt=""><div>Con «reducir movimiento» activado en el celular o la computadora, Solvix se queda quieto.</div></div>
+</section>
+
+<!-- ================= 13 ================= -->
+<section class="chapter">
+  <div class="eyebrow">13</div>
+  <h2>Cuidado de los datos</h2>
+  <ul>
+    <li><b>Cada cooperativa ve solo lo suyo.</b> La plataforma sirve a más de una cooperativa y ninguna consulta cruza de una a otra. Hay una prueba automática que lo verifica.</li>
+    <li><b>Los permisos se controlan en el servidor,</b> no en la pantalla.</li>
+    <li><b>Auditoría:</b> todo lo que toca plata, tarifas o padrón queda registrado con quién lo hizo y cuándo. También las descargas de informes y los cambios de imagen.</li>
+    <li><b>Contraseñas del personal:</b> se guardan cifradas de forma que nadie las puede leer, ni nosotros.</li>
+    <li><b>Lo que ve el socio:</b> nunca los nombres del personal ni las notas internas de un reclamo.</li>
+    <li><b>Pago con QR:</b> muestra solo lo justo para reconocer la factura, sin nombres ni domicilios.</li>
+  </ul>
+  <h3>El ingreso del socio sin contraseña</h3>
+  <p>El socio entra con tres datos que figuran en su factura. Es la misma forma de ingreso que la cooperativa ya usa, y evita que el vecino tenga que crear y recordar una contraseña. Tiene un costo que conviene conocer: <b>quien tenga la factura de otra persona en la mano puede entrar a su cuenta.</b></p>
+  <p>Lo que lo acota:</p>
+  <ul>
+    <li>Hacen falta los tres datos juntos, y uno es el documento.</li>
+    <li>Si algo no coincide, el mensaje es siempre el mismo: no dice qué dato está mal ni si ese socio existe.</li>
+    <li>Hay un límite de intentos por conexión de internet.</li>
+    <li>Con ese ingreso se puede ver, pagar, reclamar y cambiar el email y el celular de contacto. No se puede cambiar la titularidad, el domicilio ni los servicios.</li>
+  </ul>
+  <div class="tip ojo"><b>Para decidir antes de salir a producción:</b> si la cooperativa prefiere más resguardo, se puede pedir una confirmación adicional solo para cambiar los datos de contacto, sin tocar el ingreso.</div>
+</section>
+
+<!-- ================= 14 ================= -->
+<section class="chapter">
+  <div class="eyebrow">14</div>
+  <h2>Qué es de prueba en esta versión</h2>
+  <p class="lead">Lo que se ve funciona hoy con datos de prueba. Estas partes están simuladas y se conectan con lo real cuando la cooperativa aporta lo necesario.</p>
+  <table>
+    <tr><th style="width:26%">Tema</th><th>Hoy</th><th style="width:34%">Qué hace falta</th></tr>
+    <tr><td><b>Datos</b></td><td>Padrón, lecturas, facturas y pagos inventados.</td><td>El padrón real y la migración desde el sistema actual (hay que ver en qué formato exporta).</td></tr>
+    <tr><td><b>Tarifas</b></td><td>Estructura real, con algunos valores ilustrativos.</td><td>Los cuadros vigentes de todas las categorías.</td></tr>
+    <tr><td><b>Factura electrónica</b></td><td>Simulada. Los PDF dicen «sin validez fiscal».</td><td>El certificado de ARCA de la cooperativa.</td></tr>
+    <tr><td><b>Pago online</b></td><td>Pasarela de prueba, que hace de banco y no pide datos de tarjeta.</td><td>La documentación técnica y las credenciales de prueba del banco.</td></tr>
+    <tr><td><b>Avisos</b></td><td>Quedan guardados; no se envían.</td><td>Elegir el servicio de email o WhatsApp.</td></tr>
+    <tr><td><b>Energía comprada</b></td><td>Cantidades de ejemplo en el balance.</td><td>Las facturas del mayorista y el registro de la usina.</td></tr>
+    <tr><td><b>Publicación</b></td><td>Corre en una computadora, en forma local.</td><td>Publicarla en internet con https. Recién ahí se prueba en celulares reales: instalarla, usarla sin señal, GPS y cámara.</td></tr>
+  </table>
+</section>
+
+<!-- ================= 15 ================= -->
+<section class="chapter">
+  <div class="eyebrow">15</div>
+  <h2>Preguntas frecuentes</h2>
+  <dl class="faq">
+    <dt>¿El socio tiene que registrarse?</dt>
+    <dd>No. Entra con el código de socio, el número de conexión y su documento, que están en la factura.</dd>
+    <dt>¿Cuánto dura abierta la cuenta del socio?</dt>
+    <dd>Tres meses en ese dispositivo, y el plazo se renueva cada vez que la usa. Puede salir cuando quiera.</dd>
+    <dt>¿Se puede mirar más de una cuenta desde el mismo celular?</dt>
+    <dd>Sí. Con «Ver otra cuenta» se sale de la actual y se entra con los datos de la otra. Las cuentas ya abiertas quedan a un toque.</dd>
+    <dt>¿La app le arma el recorrido al operario?</dt>
+    <dd>Sí. Le dice de dónde sale (de donde está, de una calle o de una casa) y la app ordena las casas que faltan para caminar menos. Es en línea recta: no conoce lo que no se puede cruzar.</dd>
+    <dt>¿Qué pasa si el operario se queda sin señal?</dt>
+    <dd>Sigue cargando. Las lecturas se guardan en el teléfono y se envían solas cuando vuelve la conexión.</dd>
+    <dt>¿Se puede corregir una factura emitida?</dt>
+    <dd>No se edita. Se anula con una nota de crédito y queda registrado.</dd>
+    <dt>¿El sistema corta el servicio a quien debe?</dt>
+    <dd>Nunca. Arma la lista de cortes sugeridos para que decida una persona.</dd>
+    <dt>¿Quién puede anular un cobro?</dt>
+    <dd>Solo administración, con motivo. Queda en la auditoría.</dd>
+    <dt>¿Quién puede cambiar la imagen de la cooperativa?</dt>
+    <dd>Gerencia y administración, desde la sección Cooperativa.</dd>
+    <dt>¿Anda en cualquier celular?</dt>
+    <dd>Es una página web que se instala como app, sin tienda de aplicaciones. Falta probarla en teléfonos reales, que se hace cuando esté publicada.</dd>
+    <dt>¿Tiene modo oscuro?</dt>
+    <dd>Sí: claro, oscuro o automático, desde el menú del usuario.</dd>
+    <dt>¿Dónde vuelvo a ver los tutoriales?</dt>
+    <dd>Tocando tu usuario → Tutoriales.</dd>
+    <dt>Una pantalla dice «Esta pantalla tuvo un problema». ¿Qué hago?</dt>
+    <dd>Tocá «Volver a cargar». Lo que ya estaba guardado no se pierde.</dd>
+  </dl>
+</section>
+
+<!-- ================= 16 ================= -->
+<section class="chapter">
+  <div class="eyebrow">Anexo</div>
+  <h2>Usuarios de la demostración</h2>
+  <p class="lead">Para probar la plataforma como la ve cada persona. Son usuarios de prueba: existen solo mientras el modo demo está encendido.</p>
+  <h3>Lo más rápido</h3>
+  <p>En la pantalla de ingreso, en <b>Modo demo</b>, tocar el botón del rol. Entra sin escribir nada.</p>
+  <h3>El personal, con email y contraseña</h3>
+  <p>En «Trabajo en la cooperativa». La contraseña de todos es <span class="dato">demo1234</span></p>
+  <table>
+    <tr><th style="width:17%">Rol</th><th style="width:20%">Persona</th><th style="width:33%">Email</th><th>Qué ve al entrar</th></tr>
+    <tr><td>Operario</td><td>Ramón Sosa</td><td class="dato">operario@dosdemayo.example</td><td>Mi ruta de hoy, en formato celular.</td></tr>
+    <tr><td>Caja</td><td>Claudia Wagner</td><td class="dato">caja@dosdemayo.example</td><td>La caja y el padrón.</td></tr>
+    <tr><td>Facturación</td><td>Silvia Rojas</td><td class="dato">facturacion@dosdemayo.example</td><td>El asistente de facturación.</td></tr>
+    <tr><td>Gerencia</td><td>Carlos Giménez</td><td class="dato">gerencia@dosdemayo.example</td><td>El tablero.</td></tr>
+    <tr><td>Administración</td><td>Andrea Lukoski</td><td class="dato">admin@dosdemayo.example</td><td>El tablero, con todas las secciones.</td></tr>
+  </table>
+  <p>Hay además dos operarios (<span class="dato">operario2@</span> y <span class="dato">operario3@</span>, Diego Krause y Luis Ferreyra) y otra cajera (<span class="dato">caja2@</span>, Noelia Duarte), con sus propias rutas y su propia caja.</p>
+  <h3>La socia, con los datos de su factura</h3>
+  <p>En «Soy socio». No tiene contraseña.</p>
+  <table>
+    <tr><th style="width:24%">Persona</th><th>Código de socio</th><th>Número de conexión</th><th>DNI</th></tr>
+    <tr><td>Marta Benítez</td><td class="dato">1043</td><td class="dato">1026</td><td class="dato">99.658.939</td></tr>
+  </table>
+  <p>Marta tiene subsidio en la energía, consume por encima del tope y debe facturas: el portal tiene qué explicar y qué pagar.</p>
+  <h3>La segunda cooperativa</h3>
+  <p><b>Arroyo del Monte</b> es inventada. Sirve para mostrar que cada cooperativa ve su marca y solo sus datos. Se elige en el selector del modo demo.</p>
+  <ul>
+    <li><b>El personal</b> entra con <span class="dato">operario@</span>, <span class="dato">caja@</span>, <span class="dato">facturacion@</span>, <span class="dato">gerencia@</span> y <span class="dato">admin@arroyodelmonte.example</span>, con la misma contraseña.</li>
+    <li><b>El socio</b> es Hugo Ayala: socio <span class="dato">1003</span>, conexión <span class="dato">1001</span>, DNI <span class="dato">99.893.830</span>.</li>
+  </ul>
+  <div class="tip ojo"><b>Antes de usarla con datos reales,</b> el modo demo se apaga y estos usuarios dejan de poder entrar.</div>
+</section>
+
+</body>
+</html>

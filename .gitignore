@@ -1,0 +1,37 @@
+# === NODE MODULES ===
+/api/node_modules/
+/client/node_modules/
+node_modules/
+
+# === LOGS ===
+logs
+*.log
+npm-debug.log*
+
+# === COVERAGE / BUILD / CACHE ===
+coverage
+*.tsbuildinfo
+.eslintcache
+dist/
+
+# === VARIABLES DE ENTORNO (nunca al repo) ===
+.env
+.env.*
+!.env.example
+
+# === BASE LOCAL Y ARCHIVOS GENERADOS ===
+/api/.data/
+
+# === SISTEMA / EDITOR ===
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# === GENERADOS Y MATERIAL (no van al repo) ===
+# El manual en PDF se arma con `python docs/manual/build.py`; el material comercial vive fuera del repo.
+*.pdf
+*.mp4
+*.mov
+*.pptx
+*.zip
