@@ -140,9 +140,11 @@ function MapaVivo({ mapa }: { mapa: MapaConexiones }) {
   });
   const datosCapas = consultaCapas.data;
   const lecturas = modo === 'lecturas' ? consultaLecturas.data : undefined;
+  // Hasta que llegan las lecturas, el mapa sigue pintando la situación: si no, las casas desaparecían un momento.
+  const modoVisto: Modo = modo === 'lecturas' && !lecturas ? 'situacion' : modo;
 
   const k = useMemo(() => porCasa(mapa, datos, datosCapas), [mapa, datos, datosCapas]);
-  const vista = useMemo(() => armarVista(mapa, datos, k, lecturas, modo, filtros), [mapa, datos, k, lecturas, modo, filtros]);
+  const vista = useMemo(() => armarVista(mapa, datos, k, lecturas, modoVisto, filtros), [mapa, datos, k, lecturas, modoVisto, filtros]);
   const puntosDeCalor = useMemo(() => armarCalor(mapa, k, vista, calor, filtros.servicio), [mapa, k, vista, calor, filtros.servicio]);
   const reclamos = useMemo(() => datosCapas?.reclamos ?? [], [datosCapas]);
   const cortes = useMemo(() => datosCapas?.cortes ?? [], [datosCapas]);
@@ -294,8 +296,8 @@ function MapaVivo({ mapa }: { mapa: MapaConexiones }) {
 
   /* ── Día y noche ── */
   useEffect(() => {
-    if (map) aplicarHora(map, fase, sol, modo === 'lecturas');
-  }, [map, fase, sol, modo]);
+    if (map) aplicarHora(map, fase, sol, modoVisto === 'lecturas');
+  }, [map, fase, sol, modoVisto]);
 
   // En vivo: el reloj avanza solo.
   useEffect(() => {
@@ -496,7 +498,7 @@ function MapaVivo({ mapa }: { mapa: MapaConexiones }) {
 
   const colores = coloresPara(fase);
   const coloresDeCasa = COLORES.map((c) => colores[c]);
-  const leyenda = leyendaDe(modo, k.facturasParaCorte);
+  const leyenda = leyendaDe(modoVisto, k.facturasParaCorte);
   const nombreFase = nombreDeFase(fase, hora);
   const IconoFase = { Día: Sun, Amanecer: Sunrise, Atardecer: Sunset, Noche: Moon }[nombreFase];
   const reclamoElegido = reclamoId === null ? undefined : reclamos.find((r) => r.id === reclamoId);

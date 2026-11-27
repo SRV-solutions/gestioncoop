@@ -150,7 +150,7 @@ const cierre = () =>
  * Abre Chrome, deja al usuario sin la bienvenida de Solvix (y la restaura al final), arma el escenario
  * y graba lo que hace `pasos`.
  */
-async function grabarVideo({ nombre, modo, ruta, entrar, tema, detalle, pasos }) {
+async function grabarVideo({ nombre, modo, ruta, entrar, tema, detalle, pasos, portada: conPortada = true }) {
   const chrome = await abrirChrome({ ancho: 1920, alto: 1080, escala: 1 });
   let avanceAntes = null;
   try {
@@ -163,13 +163,15 @@ async function grabarVideo({ nombre, modo, ruta, entrar, tema, detalle, pasos })
     const logo = await chrome.evaluar(`fetch('/api/v1/auth/context?coop=dosdemayo').then((r) => r.json()).then((j) => j.data.cooperativa.tema.logoUrl)`);
     await chrome.ir('/login', 300);
     await chrome.evaluar(escenario(modo, ruta));
-    await chrome.evaluar(`__tapa(${JSON.stringify(portada(tema, detalle, logo))})`);
+    await chrome.evaluar(conPortada ? `__tapa(${JSON.stringify(portada(tema, detalle, logo))})` : '__sacarTapa()');
     await esperar(modo === 'escritorio' && ruta.startsWith('/mapa') ? 16_000 : 4000);
 
     const terminar = await chrome.grabar();
-    await esperar(3200);
-    await chrome.evaluar('__sacarTapa()');
-    await esperar(700);
+    if (conPortada) {
+      await esperar(3200);
+      await chrome.evaluar('__sacarTapa()');
+      await esperar(700);
+    }
     const decir = async (titulo, texto, pose, pausa = 4500) => {
       await chrome.evaluar(`__decir(${JSON.stringify(titulo)}, ${JSON.stringify(texto)}, ${JSON.stringify(pose ?? 'senala')})`);
       await esperar(pausa);
@@ -195,6 +197,15 @@ async function grabarVideo({ nombre, modo, ruta, entrar, tema, detalle, pasos })
 }
 
 const tocar = (selector, texto) => `__tocar(${JSON.stringify(selector)}, ${JSON.stringify(texto ?? null)})`;
+/** Lleva la hora del mapa de a poco (un atardecer en `ms`): de golpe, el mapa se repinta a parches. */
+const animarHora = (hasta, ms) => `(async () => {
+  const r = document.getElementById('app').contentDocument.querySelector('input[type=range][aria-label="Hora del día"]');
+  const desde = Number(r.value), pasos = Math.round(${ms} / 90);
+  for (let i = 1; i <= pasos; i++) {
+    __rango('Hora del día', desde + (${hasta} - desde) * i / pasos);
+    await new Promise((ok) => setTimeout(ok, 90));
+  }
+})()`;
 const señalar = (selector, texto) => `__tocar(${JSON.stringify(selector)}, ${JSON.stringify(texto ?? null)}, { tocar: false })`;
 
 const videos = [];
@@ -302,15 +313,32 @@ if (toca('gerencia'))
         await hacer(tocar('a', 'Deuda por socio'), 3500);
         await decir('Informes para bajar', 'Quién debe, cuánto y desde cuándo. Cada informe se baja en Excel, CSV o PDF.', 'senala', 6000);
         await hacer(tocar('nav a', 'Mapa'), 16_000);
-        await decir('Toda la cooperativa en el mapa', 'Cada casa con su situación: al día, con deuda, en mora o cortada. Y los cortes programados de cada zona.', 'senala', 4000);
-        await hacer(`__rango('Hora del día', 13)`, 9000);
-        await decir('De día y de noche', 'El mapa sigue la hora real de Dos de Mayo. De noche, las casas se iluminan.', 'piensa', 2500);
-        await hacer(`__rango('Hora del día', 21.5)`, 8000);
-        await hacer(tocar('button', 'Lecturas en vivo'), 4000);
-        await decir('Lecturas en vivo', 'Gerencia ve por dónde va la cuadrilla sin llamar a nadie: cada lectura que entra destella en el mapa.', 'festeja', 6000);
+        await tramoDelMapa({ decir, hacer }, 4000);
       },
     }),
   );
+
+/** El mapa de la gerencia: la situación de cada casa, de día y de noche, y las lecturas en vivo. */
+async function tramoDelMapa({ decir, hacer }, pausaInicial) {
+  await decir('Toda la cooperativa en el mapa', 'Cada casa con su situación: al día, con deuda, en mora o cortada. Y los cortes programados de cada zona.', 'senala', pausaInicial);
+  await decir('De día y de noche', 'El mapa sigue la hora real de Dos de Mayo. De noche, las casas se iluminan.', 'piensa', 600);
+  await hacer(animarHora(13, 3000), 4500);
+  await hacer(animarHora(21.5, 4500), 3500);
+  await hacer(tocar('button', 'Lecturas en vivo'), 4000);
+  await decir('Lecturas en vivo', 'Gerencia ve por dónde va la cuadrilla sin llamar a nadie: cada lectura que entra destella en el mapa.', 'festeja', 6000);
+}
+
+// Solo el tramo del mapa del video de la gerencia, ya cargado y sin portada: para reemplazar ese tramo
+// sin volver a grabar el resto. Se pide explícitamente:  node docs/presentacion/videos.mjs gerencia-mapa
+if (solo.includes('gerencia-mapa'))
+  await grabarVideo({
+    nombre: '4 - tramo del mapa',
+    modo: 'escritorio',
+    ruta: '/mapa',
+    portada: false,
+    entrar: { datos: { email: `gerencia@${DEMO.dominio}`, password: DEMO.clave } },
+    pasos: (p) => tramoDelMapa(p, 7000),
+  });
 
 /* ───────────────────────── Todo junto ───────────────────────── */
 
