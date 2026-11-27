@@ -33,6 +33,8 @@ const CORTO: Record<AmbienteFiscal, string> = { simulado: 'Simulada', homologaci
 export function FacturaElectronica({ cooperativaId }: { cooperativaId: number }) {
   const clave = ['srv', 'fiscal', cooperativaId];
   const consulta = useQuery({ queryKey: clave, queryFn: () => api.get<ConfigFiscalVista>(`/cooperativas/${cooperativaId}/fiscal`) });
+  // Acá y no en la configuración: al terminar la prueba se recarga la vista y la configuración se rearma.
+  const [prueba, setPrueba] = useState<PruebaArca | null>(null);
   return (
     <Card className="p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -47,13 +49,23 @@ export function FacturaElectronica({ cooperativaId }: { cooperativaId: number })
       ) : consulta.isError || !consulta.data ? (
         <ErrorState message={errorMessage(consulta.error)} onRetry={() => void consulta.refetch()} />
       ) : (
-        <Configuracion key={consulta.dataUpdatedAt} cooperativaId={cooperativaId} vista={consulta.data} />
+        <Configuracion key={consulta.dataUpdatedAt} cooperativaId={cooperativaId} vista={consulta.data} prueba={prueba} onPrueba={setPrueba} />
       )}
     </Card>
   );
 }
 
-function Configuracion({ cooperativaId, vista }: { cooperativaId: number; vista: ConfigFiscalVista }) {
+function Configuracion({
+  cooperativaId,
+  vista,
+  prueba,
+  onPrueba,
+}: {
+  cooperativaId: number;
+  vista: ConfigFiscalVista;
+  prueba: PruebaArca | null;
+  onPrueba: (p: PruebaArca) => void;
+}) {
   const qc = useQueryClient();
   const base = `/cooperativas/${cooperativaId}/fiscal`;
   const [ambiente, setAmbiente] = useState<AmbienteFiscal>(vista.ambiente);
@@ -62,7 +74,6 @@ function Configuracion({ cooperativaId, vista }: { cooperativaId: number; vista:
   const [confirmar, setConfirmar] = useState(false);
   const [tratamientos, setTratamientos] = useState<Record<string, TratamientoConcepto>>(vista.tratamientos);
   const [campos, setCampos] = useState<Record<string, string>>({});
-  const [prueba, setPrueba] = useState<PruebaArca | null>(null);
   const [sincronizar, setSincronizar] = useState(false);
   const adoptar = (v: ConfigFiscalVista) => qc.setQueryData(['srv', 'fiscal', cooperativaId], v);
 
@@ -78,7 +89,7 @@ function Configuracion({ cooperativaId, vista }: { cooperativaId: number; vista:
   const probar = useMutation({
     mutationFn: () => api.post<PruebaArca>(`${base}/probar`),
     onSuccess: (p) => {
-      setPrueba(p);
+      onPrueba(p);
       void qc.invalidateQueries({ queryKey: ['srv', 'fiscal', cooperativaId] });
     },
   });
@@ -318,11 +329,8 @@ function ResultadoPrueba({ prueba }: { prueba: PruebaArca }) {
 
 /** Solo en homologación: unas pocas facturas reales mandadas a ARCA con su mismo detalle, para ver el CAE. */
 function FacturasDePrueba({ cooperativaId }: { cooperativaId: number }) {
-  const qc = useQueryClient();
-  const emitir = useMutation({
-    mutationFn: () => api.post<EmisionPruebaArca>(`/cooperativas/${cooperativaId}/fiscal/facturas-prueba`),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['srv', 'fiscal', cooperativaId] }),
-  });
+  // Sin volver a pedir la configuración: eso rearma el panel y el resultado se perdería.
+  const emitir = useMutation({ mutationFn: () => api.post<EmisionPruebaArca>(`/cooperativas/${cooperativaId}/fiscal/facturas-prueba`) });
   const e = emitir.data;
   return (
     <div className="space-y-3 border-t border-linea pt-5">
