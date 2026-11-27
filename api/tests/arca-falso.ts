@@ -50,6 +50,8 @@ export class ArcaFalso {
   /** Documentos de receptor que va a rechazar (como si fueran inválidos). */
   rechazarDocs = new Set<string>();
   logins = 0;
+  /** Como ARCA cuando el permiso anterior sigue vigente: no entrega otro. */
+  yaAutenticado = false;
   /** Contenido firmado de cada pedido de acceso (el TRA). */
   tras: string[] = [];
   pedidosCae: { pv: number; tipo: number; detalles: string[] }[] = [];
@@ -96,6 +98,12 @@ export class ArcaFalso {
   };
 
   private wsaa(cuerpo: string): RespuestaSoap {
+    if (this.yaAutenticado) {
+      return {
+        status: 500,
+        cuerpo: `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"><soapenv:Body><soapenv:Fault><faultcode xmlns:ns1="http://xml.apache.org/axis/">ns1:coe.alreadyAuthenticated</faultcode><faultstring>El CEE ya posee un TA valido para el acceso al WSN solicitado</faultstring></soapenv:Fault></soapenv:Body></soapenv:Envelope>`,
+      };
+    }
     this.logins += 1;
     const cms = texto(cuerpo, 'in0') ?? '';
     const p7 = forge.pkcs7.messageFromAsn1(forge.asn1.fromDer(forge.util.decode64(cms))) as forge.pkcs7.PkcsSignedData & {

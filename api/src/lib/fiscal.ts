@@ -46,15 +46,21 @@ const pidiendo = new Map<number, Promise<Credenciales>>();
 /** Las credenciales de la cooperativa: las guardadas si les queda tiempo, o unas nuevas. */
 async function credenciales(cfg: ConfigFiscal, cuit: string, ambiente: AmbienteArca, renovar = false): Promise<Credenciales> {
   const quedan = cfg.taVence ? cfg.taVence.getTime() - Date.now() : 0;
-  if (!renovar && cfg.taCifrado && cfg.taAmbiente === ambiente && quedan > 10 * 60_000) {
-    const { token, sign } = JSON.parse(descifrar(cfg.taCifrado)) as { token: string; sign: string };
-    return { token, sign, cuit };
-  }
+  const guardadas = cfg.taCifrado && cfg.taAmbiente === ambiente && quedan > 0 ? { ...(JSON.parse(descifrar(cfg.taCifrado)) as { token: string; sign: string }), cuit } : null;
+  // Se usan hasta el final: si vencen en medio de una emisión, ARCA contesta 600 y ahí se renuevan.
+  if (!renovar && guardadas && quedan > 60_000) return guardadas;
   // Dos pedidos a la vez piden un solo permiso: ARCA no entrega otro mientras el primero siga vigente.
   const enCurso = pidiendo.get(cfg.cooperativaId);
   if (enCurso) return enCurso;
   const pedido = (async () => {
-    const ticket = await pedirAcceso({ transporte, ambiente, certificado: cfg.certificado!, clave: descifrar(cfg.claveCifrada!) });
+    let ticket;
+    try {
+      ticket = await pedirAcceso({ transporte, ambiente, certificado: cfg.certificado!, clave: descifrar(cfg.claveCifrada!) });
+    } catch (err) {
+      // En el último minuto, ARCA todavía no entrega otro: se sigue con el guardado.
+      if (!renovar && guardadas && err instanceof ErrorArca && /alreadyauthenticated/i.test(err.codigo ?? '')) return guardadas;
+      throw err;
+    }
     const datos = { taCifrado: cifrar(JSON.stringify({ token: ticket.token, sign: ticket.sign })), taVence: ticket.vence, taAmbiente: ambiente };
     await ConfigFiscal.update(datos, { where: { cooperativaId: cfg.cooperativaId } });
     Object.assign(cfg, datos);
@@ -379,7 +385,7 @@ async function talonariosFiscales(): Promise<{ tipo: 'factura' | 'nota_credito';
   return lista;
 }
 
-async function conArca(): Promise<{ cfg: ConfigFiscal; cuit: string; ambiente: AmbienteArca }> {
+export async function conArca(): Promise<{ cfg: ConfigFiscal; cuit: string; ambiente: AmbienteArca }> {
   const cfg = await configFiscalActual();
   if (!cfg || !esArca(cfg.ambiente)) throw conflict('Elegí el ambiente de ARCA (homologación o producción) y guardá antes de probar.');
   if (!cfg.certificado || !cfg.claveCifrada) throw conflict('Primero cargá el certificado y la clave de ARCA.');

@@ -3,18 +3,22 @@
 // tarifa, la prueba de conexión y la alineación de la numeración con ARCA.
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CircleCheck, CircleX, FileKey, PlugZap, RefreshCw, Save, Trash2 } from 'lucide-react';
+import { CircleCheck, CircleX, FileKey, FlaskConical, PlugZap, RefreshCw, Save, Trash2 } from 'lucide-react';
 import {
   AMBIENTE_FISCAL_ETIQUETA,
   AMBIENTES_FISCALES,
+  CONDICION_IVA_ETIQUETA,
   formatCuit,
   formatDate,
   formatDateTime,
+  formatMoney,
+  SERVICIO_ETIQUETA,
   TRATAMIENTO_FISCAL_ETIQUETA,
   TRATAMIENTOS_FISCALES,
   TRIBUTOS_ARCA,
   type AmbienteFiscal,
   type ConfigFiscalVista,
+  type EmisionPruebaArca,
   type NumeracionArca,
   type PruebaArca,
   type TratamientoConcepto,
@@ -217,6 +221,8 @@ function Configuracion({ cooperativaId, vista }: { cooperativaId: number; vista:
         {prueba && <ResultadoPrueba prueba={prueba} />}
       </div>
 
+      {vista.ambiente === 'homologacion' && vista.certificado && <FacturasDePrueba cooperativaId={cooperativaId} />}
+
       <Ayuda />
       {sincronizar && <Sincronizar cooperativaId={cooperativaId} puntoVenta={vista.puntoVenta} onClose={() => setSincronizar(false)} />}
     </div>
@@ -306,6 +312,62 @@ function ResultadoPrueba({ prueba }: { prueba: PruebaArca }) {
       <p className={prueba.ok ? 'px-4 py-2.5 text-sm font-semibold text-exito' : 'px-4 py-2.5 text-sm font-semibold text-peligro'}>
         {prueba.ok ? 'Todo listo para facturar con ARCA.' : 'Hay algo para resolver antes de facturar.'}
       </p>
+    </div>
+  );
+}
+
+/** Solo en homologación: unas pocas facturas reales mandadas a ARCA con su mismo detalle, para ver el CAE. */
+function FacturasDePrueba({ cooperativaId }: { cooperativaId: number }) {
+  const qc = useQueryClient();
+  const emitir = useMutation({
+    mutationFn: () => api.post<EmisionPruebaArca>(`/cooperativas/${cooperativaId}/fiscal/facturas-prueba`),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['srv', 'fiscal', cooperativaId] }),
+  });
+  const e = emitir.data;
+  return (
+    <div className="space-y-3 border-t border-linea pt-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0 max-w-prose">
+          <p className="font-semibold text-tinta">Facturas de prueba</p>
+          <p className="text-sm text-tinta-suave">
+            Manda a ARCA una factura de cada tipo del último mes (por letra, servicio y condición frente al IVA), con su mismo detalle y la fecha de hoy. Las facturas de la cooperativa
+            no cambian; los números que autorice ARCA se descuentan del talonario.
+          </p>
+        </div>
+        <Button variant="secondary" icon={FlaskConical} loading={emitir.isPending} onClick={() => emitir.mutate()}>
+          Emitir facturas de prueba
+        </Button>
+      </div>
+      {emitir.isError && <FormAlert>{errorMessage(emitir.error)}</FormAlert>}
+      {e && (
+        <div className="rounded-xl border border-linea">
+          <ul className="divide-y divide-linea">
+            {e.facturas.map((f) => (
+              <li key={f.muestraId} className="flex items-start gap-3 px-4 py-2.5">
+                {f.cae ? <CircleCheck className="mt-0.5 size-5 shrink-0 text-exito" aria-hidden /> : <CircleX className="mt-0.5 size-5 shrink-0 text-peligro" aria-hidden />}
+                <div className="min-w-0">
+                  <p className="font-medium text-tinta">
+                    Factura {f.letra} · {SERVICIO_ETIQUETA[f.servicio]} · {f.condicionIva ? CONDICION_IVA_ETIQUETA[f.condicionIva] : 'Consumidor final'} · {formatMoney(f.total)}
+                  </p>
+                  <p className="text-sm text-tinta-suave">
+                    Socio {f.socio.numero} · {f.socio.nombre} · copia de {f.muestra}
+                  </p>
+                  {f.cae ? (
+                    <p className="break-words font-mono text-sm text-tinta">
+                      {f.referencia} · CAE {f.cae} · vence {formatDate(f.caeVence!)}
+                    </p>
+                  ) : (
+                    <p className="break-words text-sm text-peligro">{f.motivo}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className={e.autorizadas === e.facturas.length ? 'px-4 py-2.5 text-sm font-semibold text-exito' : 'px-4 py-2.5 text-sm font-semibold text-peligro'}>
+            ARCA autorizó {e.autorizadas} de {e.facturas.length} · punto de venta {e.puntoVenta} · {formatDate(e.fecha)}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

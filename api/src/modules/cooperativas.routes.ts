@@ -23,6 +23,7 @@ import { runInCooperativa, runUnscoped } from '../lib/context';
 import { clearCooperativaCache, toCooperativaPublica } from '../lib/cooperativas';
 import { badRequest, conflict, idParam, notFound, ok, parse } from '../lib/errors';
 import { borrarCertificado, guardarCertificado, guardarConfigFiscal, probarConexion, sincronizarNumeracion, vistaConfigFiscal } from '../lib/fiscal';
+import { emitirFacturasDePrueba } from '../lib/fiscal-prueba';
 import { esImagen, sirveParaPdf } from '../lib/imagenes';
 import { aVigencia, liquidacionDeCooperativa, liquidacionDelMes, mesesConFacturas, vigenteEl } from '../lib/srv';
 import { hoy } from '../lib/tarifas';
@@ -304,6 +305,12 @@ cooperativasRouter.delete('/:id/fiscal/certificado', async (req, res) => {
 cooperativasRouter.post('/:id/fiscal/probar', async (req, res) => {
   const coop = await cooperativaOFalla(idParam(req));
   ok(res, await runInCooperativa(coop.id, probarConexion));
+});
+
+/** Solo en homologación: pide a ARCA el CAE de unas pocas facturas reales, sin tocarlas en la app. */
+cooperativasRouter.post('/:id/fiscal/facturas-prueba', async (req, res) => {
+  const coop = await cooperativaOFalla(idParam(req));
+  ok(res, await runInCooperativa(coop.id, emitirFacturasDePrueba));
 });
 
 /** Lleva la numeración de GestiónCoop hasta la de ARCA (nunca para atrás). */

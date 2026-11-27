@@ -1,5 +1,6 @@
 // Factura electrónica con ARCA: cómo se conecta cada cooperativa y cómo se informa cada concepto.
 import { z } from 'zod';
+import type { CondicionIva, ServicioConexion } from './padron';
 
 export const AMBIENTES_FISCALES = ['simulado', 'homologacion', 'produccion'] as const;
 export type AmbienteFiscal = (typeof AMBIENTES_FISCALES)[number];
@@ -82,6 +83,31 @@ export interface PruebaArca {
   ok: boolean;
   pasos: PasoPruebaArca[];
   numeracion: NumeracionArca[];
+}
+
+/** Una factura de prueba: una factura real de la cooperativa mandada a ARCA (homologación) con su mismo detalle. */
+export interface FacturaPruebaArca {
+  /** La factura de la app que se usó de muestra (no se modifica). */
+  muestraId: number;
+  muestra: string;
+  socio: { numero: number; nombre: string };
+  servicio: ServicioConexion;
+  condicionIva: CondicionIva | null;
+  letra: string;
+  total: string;
+  /** El comprobante que quedó en ARCA; `null` si no se autorizó. */
+  referencia: string | null;
+  cae: string | null;
+  caeVence: string | null;
+  /** Por qué ARCA no la autorizó, o por qué no se pudo mandar. */
+  motivo: string | null;
+}
+
+export interface EmisionPruebaArca {
+  fecha: string;
+  puntoVenta: number;
+  autorizadas: number;
+  facturas: FacturaPruebaArca[];
 }
 
 /** Dígito verificador del CUIT (módulo 11). */

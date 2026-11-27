@@ -4,7 +4,7 @@
 // recuperación de lo ya autorizado y la nota de crédito.
 import { QueryTypes } from 'sequelize';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { ConfigFiscalVista, PruebaArca, TratamientoConcepto } from '../src/shared';
+import type { ConfigFiscalVista, EmisionPruebaArca, PruebaArca, TratamientoConcepto } from '../src/shared';
 import { sequelize } from '../src/db';
 import { cbteTipo, docTipo } from '../src/lib/arca/codigos';
 import { importesArca, ImportesNoCierran, type RenglonFiscal } from '../src/lib/arca/importes';
@@ -358,10 +358,81 @@ describe('emitir el mes con ARCA', () => {
     expect(arca.logins).toBe(1);
   });
 
+  it('en su último minuto, si ARCA todavía no entrega otro permiso, sigue con el guardado', async () => {
+    await sequelize.query(`UPDATE config_fiscal SET ta_vence = now() + interval '30 seconds' WHERE cooperativa_id = $a`, { bind: { a: w.a.id } });
+    arca.yaAutenticado = true;
+    try {
+      const prueba: PruebaArca = (await srv.post(`${fiscal()}/probar`)).body.data;
+      expect(prueba.pasos.find((p) => p.nombre.startsWith('Permiso'))).toMatchObject({ ok: true });
+    } finally {
+      arca.yaAutenticado = false;
+    }
+    // Faltando más de un minuto, ni lo intenta.
+    await sequelize.query(`UPDATE config_fiscal SET ta_vence = now() + interval '5 minutes' WHERE cooperativa_id = $a`, { bind: { a: w.a.id } });
+    await srv.post(`${fiscal()}/probar`);
+    expect(arca.logins).toBe(1);
+  });
+
   it('todo lo emitido con ARCA quedó sellado: la integridad está en orden', async () => {
     const r = await runInCooperativa(w.a.id, verificarIntegridad);
     expect(r.problemas).toEqual([]);
     expect(r.resumen.facturas.revisados).toBeGreaterThan(total);
+  });
+});
+
+describe('facturas de prueba en homologación', () => {
+  const huella = async () =>
+    (await sql<{ h: string }>(`SELECT md5(string_agg(concat_ws('|', id, estado, numero, cae, saldo), ',' ORDER BY id)) AS h FROM comprobantes WHERE cooperativa_id = $a`))[0]!.h;
+  const numerador = async (letra: string) =>
+    (await sql<{ ultimo: number }>(`SELECT ultimo FROM numeradores WHERE cooperativa_id = $a AND tipo = 'factura' AND letra = $letra AND punto_venta = ${PV}`, { letra }))[0]?.ultimo ?? 0;
+  const pedir = () => srv.post(`${fiscal()}/facturas-prueba`);
+
+  it('manda una factura de cada forma de facturar, no toca las de la app y la numeración sigue alineada', async () => {
+    const antes = await huella();
+    const ultimoB = arca.ultimo(PV, cbteTipo('factura', 'B'));
+    const res = await pedir();
+    expect(res.status).toBe(200);
+    const e: EmisionPruebaArca = res.body.data;
+    expect(e.facturas.length).toBeGreaterThan(1);
+    expect(e.autorizadas).toBe(e.facturas.length);
+    const formas = e.facturas.map((f) => `${f.letra}|${f.servicio}|${f.condicionIva}`);
+    expect(new Set(formas).size).toBe(formas.length);
+    expect(e.facturas.every((f) => /^7\d{13}$/.test(f.cae ?? '') && f.referencia?.includes(`${String(PV).padStart(4, '0')}-`) && f.motivo === null)).toBe(true);
+    // Con el detalle real de cada factura y la fecha de hoy.
+    expect(texto(arca.pedidosCae.at(-1)!.detalles[0]!, 'CbteFch')).toBe(HOY.replace(/-/g, ''));
+    expect(arca.ultimo(PV, cbteTipo('factura', 'B'))).toBe(ultimoB + e.facturas.filter((f) => f.letra === 'B').length);
+    for (const letra of ['A', 'B']) expect(await numerador(letra)).toBe(arca.ultimo(PV, cbteTipo('factura', letra)));
+    expect(await huella()).toBe(antes);
+  });
+
+  it('si ARCA rechaza una, vuelve con el motivo, su número queda libre y las demás salen', async () => {
+    const [muestra] = await sql<{ nro: string }>(
+      `SELECT snapshot_json->'titular'->>'nroDoc' AS nro FROM comprobantes WHERE id = $id`,
+      { id: ((await pedir()).body.data as EmisionPruebaArca).facturas.find((f) => f.letra === 'B')!.muestraId },
+    );
+    arca.rechazarDocs.add(muestra!.nro.replace(/\D/g, ''));
+    try {
+      const e: EmisionPruebaArca = (await pedir()).body.data;
+      const rechazadas = e.facturas.filter((f) => !f.cae);
+      expect(rechazadas.length).toBeGreaterThan(0);
+      expect(rechazadas.every((f) => f.referencia === null && /ARCA lo rechazó: 10015/.test(f.motivo ?? ''))).toBe(true);
+      expect(e.autorizadas).toBe(e.facturas.length - rechazadas.length);
+      for (const letra of ['A', 'B']) expect(await numerador(letra)).toBe(arca.ultimo(PV, cbteTipo('factura', letra)));
+    } finally {
+      arca.rechazarDocs.clear();
+    }
+  });
+
+  it('en producción no se puede: ahí tendrían validez fiscal', async () => {
+    expect((await srv.put(fiscal()).send({ ambiente: 'produccion', puntoVenta: PV, confirmarProduccion: true })).status).toBe(200);
+    try {
+      const res = await pedir();
+      expect(res.status).toBe(409);
+      expect(res.body.error.message).toMatch(/solo para homologación/);
+    } finally {
+      await srv.put(fiscal()).send({ ambiente: 'homologacion', puntoVenta: PV });
+    }
+    expect((await oficina.post(`${fiscal()}/facturas-prueba`)).status).toBe(403);
   });
 });
 
