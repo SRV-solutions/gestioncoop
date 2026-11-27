@@ -1,8 +1,11 @@
 import { lazy, Suspense, type ReactNode } from 'react';
-import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Compass } from 'lucide-react';
-import type { Rol } from '@shared';
+import { subdominioSchema, type LoginContext, type Rol } from '@shared';
+import { api, qs } from './lib/api';
 import { useAuth } from './lib/auth';
+import { elegirCooperativa } from './lib/cooperativa-elegida';
 import { usePagina } from './lib/pagina';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Empty, ErrorState, LoadingScreen } from './components/ui';
@@ -100,6 +103,34 @@ function NotFoundPage() {
   );
 }
 
+/**
+ * El link de cada cooperativa: gestioncoop.wearesrv.com/dosdemayo abre el ingreso con su nombre y su
+ * logo, y el dispositivo la recuerda. Si no es una cooperativa, es una página que no existe.
+ */
+function EntradaCooperativa() {
+  const { cooperativa = '' } = useParams();
+  const valida = subdominioSchema.safeParse(cooperativa);
+  const consulta = useQuery({
+    queryKey: ['entrada-cooperativa', cooperativa],
+    queryFn: async () => {
+      const c = await api.get<LoginContext>(`/auth/context${qs({ coop: cooperativa })}`);
+      elegirCooperativa(c.cooperativa.subdominio);
+      return c;
+    },
+    enabled: valida.success,
+    retry: false,
+  });
+  if (!valida.success || consulta.isError) {
+    return (
+      <RequireAuth>
+        <NotFoundPage />
+      </RequireAuth>
+    );
+  }
+  if (!consulta.data) return <LoadingScreen />;
+  return <Navigate to={`/login${qs({ coop: consulta.data.cooperativa.subdominio })}`} replace />;
+}
+
 const area = (roles: Rol[], page: ReactNode) => <RequireRole roles={roles}>{page}</RequireRole>;
 
 export function App() {
@@ -164,6 +195,7 @@ export function App() {
         <Route path="/superadmin/cooperativas/:id" element={area(['superadmin'], <CooperativaSrvPage />)} />
       </Route>
 
+      <Route path="/:cooperativa" element={<EntradaCooperativa />} />
       <Route path="*" element={<RequireAuth><NotFoundPage /></RequireAuth>} />
     </Routes>
     </Suspense>

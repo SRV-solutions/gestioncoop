@@ -186,6 +186,11 @@ describe('modo demo', () => {
       expect((await request(app).post('/api/v1/auth/demo').send({ rol: 'gerencia' })).status).toBe(404);
       const ctx = await request(app).get('/api/v1/auth/context');
       expect(ctx.body.data.demo).toEqual({ activo: false, opciones: [], cooperativas: [] });
+      // El link de cada cooperativa (gestioncoop.wearesrv.com/<cooperativa>) funciona igual: muestra la suya.
+      const otra = await request(app).get('/api/v1/auth/context?coop=coop-b');
+      expect(otra.body.data.cooperativa.subdominio).toBe('coop-b');
+      expect(otra.body.data.demo.cooperativas).toEqual([]);
+      expect((await request(app).get('/api/v1/auth/context?coop=no-existe')).status).toBe(404);
       const conClave = await request(app).post('/api/v1/auth/login').send({ email: 'demo@a.test', password: PASSWORD });
       expect(conClave.status).toBe(401);
     } finally {

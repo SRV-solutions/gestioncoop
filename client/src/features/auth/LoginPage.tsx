@@ -36,6 +36,7 @@ import {
 import { api, ApiError, errorMessage, qs } from '../../lib/api';
 import { homeFor, useAuth } from '../../lib/auth';
 import { cn } from '../../lib/cn';
+import { cooperativaElegida, elegirCooperativa, olvidarCooperativa } from '../../lib/cooperativa-elegida';
 import { cuentasRecordadas, olvidarCuenta, recordarCuenta, type CuentaRecordada } from '../../lib/cuentas';
 import { BotonTema, CoopMark, NombreProducto, PoweredBy } from '../../components/Logo';
 import { Button, ErrorState, Field, FormAlert, Skeleton } from '../../components/ui';
@@ -283,11 +284,26 @@ export function LoginPage() {
   const { me, demoLogin } = useAuth();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const coop = params.get('coop') ?? undefined;
+  // La pedida en la dirección (el link de la cooperativa lleva acá); si no, la que se eligió antes en este dispositivo.
+  const pedida = params.get('coop') ?? undefined;
+  const coop = pedida ?? cooperativaElegida();
 
   const context = useQuery({
     queryKey: ['login-context', coop ?? ''],
-    queryFn: () => api.get<LoginContext>(`/auth/context${qs({ coop })}`),
+    queryFn: async () => {
+      try {
+        const c = await api.get<LoginContext>(`/auth/context${qs({ coop })}`);
+        if (pedida) elegirCooperativa(c.cooperativa.subdominio);
+        return c;
+      } catch (e) {
+        // Una recordada que ya no existe se olvida y se muestra la de por defecto.
+        if (!pedida && coop && e instanceof ApiError && e.status === 404) {
+          olvidarCooperativa();
+          return api.get<LoginContext>('/auth/context');
+        }
+        throw e;
+      }
+    },
     staleTime: 5 * 60_000,
     placeholderData: (previous) => previous,
   });
@@ -296,6 +312,7 @@ export function LoginPage() {
   const [modo, setModo] = useState<Modo>(modoGuardado);
   const [formError, setFormError] = useState<string | null>(null);
   const [demoBusy, setDemoBusy] = useState<Rol | null>(null);
+
 
   if (me) return <Navigate to={homeFor(me)} replace />;
 

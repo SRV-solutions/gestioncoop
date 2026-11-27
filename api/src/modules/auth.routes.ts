@@ -32,11 +32,12 @@ const loginLimiter = limiter(20);
 const sessionLimiter = limiter(300);
 
 /**
- * Cooperativa de la pantalla de ingreso: la del subdominio; si no hay, la que se pidió por
- * parámetro (solo en modo demo) o la cooperativa por defecto.
+ * Cooperativa de la pantalla de ingreso: la del subdominio; si no hay, la que se pidió (el link
+ * gestioncoop.wearesrv.com/<cooperativa> la pide así) o la cooperativa por defecto. Pedirla solo
+ * muestra su nombre y su logo: para entrar igual hacen falta los datos del socio o la contraseña.
  */
 async function loginCooperativa(req: Request, requested?: string): Promise<Cooperativa> {
-  const sub = subdominioOf(req) ?? (config.demoMode ? requested : undefined) ?? config.cooperativaPorDefecto;
+  const sub = subdominioOf(req) ?? requested ?? config.cooperativaPorDefecto;
   const coop = await findCooperativaBySubdominio(sub);
   if (!coop || !coop.activa) throw notFound('No encontramos esa cooperativa');
   return coop;
