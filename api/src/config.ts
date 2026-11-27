@@ -29,6 +29,11 @@ export const config = {
   isProd,
   isTest,
   port: Number(process.env.PORT ?? 4100),
+  /**
+   * Procesos que atienden pedidos. Node usa un núcleo por proceso: con `WEB_CONCURRENCY=4` la API
+   * aprovecha 4 núcleos. Con 1 (lo normal en local y en los tests) es un solo proceso, como siempre.
+   */
+  trabajadores: isTest ? 1 : Math.min(16, Math.max(1, Math.floor(Number(process.env.WEB_CONCURRENCY ?? 1)) || 1)),
   /** Cantidad de proxies delante de la API (1 en local con Vite; 2 en Railway detrás de Netlify). */
   trustProxy: Number(process.env.TRUST_PROXY ?? 1),
   appUrl: (process.env.APP_URL ?? 'http://localhost:5180').replace(/\/$/, ''),

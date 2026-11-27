@@ -676,6 +676,8 @@ export async function lanzarProceso(
   trabajo: (avanzar: (hechas: number, total: number) => Promise<void>) => Promise<void>,
 ): Promise<ProcesoFacturacionModel> {
   const ctx = currentContext()!;
+  // Uno que murió con su proceso no tiene que trabar al nuevo.
+  await cerrarProcesosHuerfanos();
   let proceso: ProcesoFacturacionModel;
   try {
     proceso = await ProcesoFacturacionModel.create({ tipo, anio: mes.anio, mes: mes.mes, usuarioId: ctx.userId });
@@ -685,6 +687,12 @@ export async function lanzarProceso(
   }
   const cerrar = (datos: { estado: 'terminado' | 'fallido'; error?: string }) =>
     ProcesoFacturacionModel.update({ ...datos, terminadoEl: new Date() }, { where: { id: proceso.id } });
+
+  // Mientras trabaja, da señales de vida: así se distingue uno lento de uno que murió con su proceso.
+  const latido = setInterval(() => {
+    void sequelize.query(`UPDATE procesos_facturacion SET actualizado_el = now() WHERE id = $id AND estado = 'en_curso'`, { bind: { id: proceso.id } }).catch(() => undefined);
+  }, LATIDO_MS);
+  latido.unref();
 
   // Corre con el mismo usuario y la misma cooperativa del pedido que lo lanzó.
   const tarea = requestContext.run({ ...ctx }, async () => {
@@ -697,6 +705,8 @@ export async function lanzarProceso(
       const esperado = err instanceof HttpError || err instanceof ErrorDeCalculo || err instanceof ErrorArca;
       if (!esperado) console.error(`[FACTURACION] ${tipo} ${mes.mes}/${mes.anio}`, err);
       await cerrar({ estado: 'fallido', error: esperado ? err.message.slice(0, 300) : 'Se interrumpió por un problema nuestro. Probá de nuevo.' }).catch(() => undefined);
+    } finally {
+      clearInterval(latido);
     }
   });
   corriendo.add(tarea);
@@ -709,10 +719,18 @@ export async function esperarProcesos(): Promise<void> {
   await Promise.all([...corriendo]);
 }
 
-/** Al arrancar la API: un trabajo que quedó "en curso" murió con el proceso anterior. */
+/** Cada cuánto da señales de vida un trabajo en marcha, y cuánto silencio significa que murió. */
+const LATIDO_MS = 30_000;
+const SILENCIO = `interval '2 minutes'`;
+
+/**
+ * Un trabajo «en curso» que hace rato no da señales de vida murió con el proceso que lo corría (un
+ * reinicio, una publicación nueva). Se mira el silencio y no solo el estado: con varios procesos, o
+ * mientras la versión vieja termina de apagarse, otro puede estar trabajando de verdad.
+ */
 export async function cerrarProcesosHuerfanos(): Promise<void> {
   await sequelize.query(
     `UPDATE procesos_facturacion SET estado = 'fallido', error = 'El servidor se reinició en medio del trabajo. Volvé a intentarlo: sigue desde donde quedó.', terminado_el = now()
-     WHERE estado = 'en_curso'`,
+     WHERE estado = 'en_curso' AND actualizado_el < now() - ${SILENCIO}`,
   );
 }

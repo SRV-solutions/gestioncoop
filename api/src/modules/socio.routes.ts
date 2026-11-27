@@ -36,6 +36,7 @@ import { explicarFactura } from '../lib/explicar';
 import { crearIntentoPago, estadoIntento } from '../lib/pagos-online';
 import { reciboPdf } from '../lib/pdf-recibo';
 import { crearReclamo, detalleReclamo, filasReclamo } from '../lib/reclamos';
+import { recordar } from '../lib/memoria';
 import { hoy, toCuadro } from '../lib/tarifas';
 import { requireCooperativaId } from '../lib/tenant';
 import { requireRole } from '../middlewares/auth';
@@ -278,9 +279,12 @@ socioRouter.get('/consumo', async (req, res) => {
     if (propios.length === 0) continue;
     const hasta = Number(propios[0]!.n);
     const desde = hasta - 11;
-    // Promedio de las conexiones de la misma zona, servicio y categoría, mes por mes.
-    const zona = conexion.zonaId
-      ? await sequelize.query<{ n: number; promedio: string }>(
+    // Promedio de las conexiones de la misma zona, servicio y categoría, mes por mes. Es el mismo para
+    // todo el barrio y suma muchas lecturas: se recuerda unos minutos.
+    const zonaId = conexion.zonaId;
+    const zona = zonaId
+      ? await recordar(`consumo-zona:${cooperativaId}:${sc.servicio}:${sc.categoria}:${zonaId}:${desde}:${hasta}`, 10 * 60_000, () =>
+          sequelize.query<{ n: number; promedio: string }>(
           `SELECT t.n, avg(t.consumo) AS promedio FROM (
              SELECT p.anio * 12 + p.mes AS n, m.servicio_conexion_id, sum(l.consumo) AS consumo
              FROM lecturas l
@@ -291,7 +295,8 @@ socioRouter.get('/consumo', async (req, res) => {
              WHERE l.cooperativa_id = :cooperativaId AND l.consumo IS NOT NULL AND (p.anio * 12 + p.mes) BETWEEN :desde AND :hasta
              GROUP BY 1, 2) t
            GROUP BY t.n`,
-          { replacements: { cooperativaId, servicio: sc.servicio, categoria: sc.categoria, zona: conexion.zonaId, desde, hasta }, type: QueryTypes.SELECT },
+          { replacements: { cooperativaId, servicio: sc.servicio, categoria: sc.categoria, zona: zonaId, desde, hasta }, type: QueryTypes.SELECT },
+        ),
         )
       : [];
     const propioDe = new Map(propios.map((p) => [Number(p.n), p]));

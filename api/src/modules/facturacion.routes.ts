@@ -38,7 +38,7 @@ import { Comprobante, ComprobanteRenglon, Cooperativa, CooperativaImagen, Period
 import { writeAudit } from '../lib/audit';
 import { conflict, idParam, notFound, ok, parse } from '../lib/errors';
 import { avisarFacturas, calcularPrefacturas, emitirBorradores, lanzarProceso, reservarNumeros } from '../lib/facturacion';
-import { sirveParaPdf } from '../lib/imagenes';
+import { logoParaPdf, sirveParaPdf } from '../lib/imagenes';
 import { controlDeCierre } from '../lib/lecturas';
 import { pdfComprobante } from '../lib/pdf-comprobante';
 import { cargarParametros, hoy } from '../lib/tarifas';
@@ -561,7 +561,8 @@ export async function pdfDeComprobante(id: number, opciones: { modelo?: ModeloFa
       : null;
   // El logo propio de la factura; si no hay, el isotipo de la app.
   const imagen = (tipo: string) => imagenes.find((i) => i.tipo === tipo)?.contenido;
-  const logo = modelo.conLogo ? ([imagen('factura'), imagen('isotipo')].find(sirveParaPdf) ?? null) : null;
+  const original = modelo.conLogo ? ([imagen('factura'), imagen('isotipo')].find(sirveParaPdf) ?? null) : null;
+  const logo = original ? logoParaPdf(original) : null;
   const pdf = await pdfComprobante({
     cooperativa: { nombre: coop!.nombre, cuit: coop!.cuit, config: coop!.configJson, color: modelo.color ?? coop!.temaJson.colores.primario, modelo, logo },
     comprobante: detalle,

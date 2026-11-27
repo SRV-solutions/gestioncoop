@@ -733,5 +733,10 @@ puesto. La pantalla de ingreso tiene su propio botón de sol y luna porque ahí 
   del front, `TRUST_PROXY=2`, `DEMO_MODE`, `DEMO_ACCESO_RAPIDO`, `SUPERADMIN_*`). En producción son obligatorias
   **`CLAVE_CIFRADO` y `CLAVE_INTEGRIDAD`** (32+ caracteres cada una, distintas, al azar y **que no cambien nunca**:
   guardarlas también fuera de Railway). Para los mails, `RESEND_API_KEY` y `CORREO_REMITENTE`.
+- **Capacidad:** Node usa un núcleo por proceso. `WEB_CONCURRENCY=4` arranca 4 procesos que atienden pedidos (y uno
+  principal que hace lo que va una sola vez: la verificación diaria, cerrar trabajos colgados). Para más capacidad,
+  subir ese número (hasta el tope de vCPU del plan) y no las réplicas de Railway: cada réplica correría su propia
+  verificación diaria. Para medir: `node api/scripts/carga.mjs` (el uso está al principio del archivo); el
+  2026-11-27, con un solo proceso, se saturaba en ~263 pedidos/s (~3.900 personas usando el portal a la vez).
 - **Client en Netlify:** Base directory `client`. Definir `API_URL` con la dirección de la API en Railway: el build
   genera el proxy de `/api`, así el navegador ve un solo dominio y las cookies funcionan sin CORS.

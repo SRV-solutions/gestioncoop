@@ -514,6 +514,8 @@ const corriendo = new Set<Promise<void>>();
 /** Arranca una verificación de la cooperativa en curso y vuelve enseguida. Una sola a la vez por cooperativa. */
 export async function lanzarVerificacion(origen: 'manual' | 'automatica', usuarioId: number | null): Promise<VerificacionIntegridad> {
   const cooperativaId = requireCooperativaId();
+  // Una que murió con su proceso no tiene que trabar a la nueva.
+  await cerrarVerificacionesHuerfanas();
   let registro: VerificacionIntegridad;
   try {
     registro = await VerificacionIntegridad.create({ origen, usuarioId });
@@ -563,11 +565,15 @@ export async function esperarVerificaciones(): Promise<void> {
   await Promise.all([...corriendo]);
 }
 
-/** Al arrancar la API: una verificación que quedó «en curso» murió con el proceso anterior. */
+/**
+ * Una verificación que sigue «en curso» después de media hora murió con el proceso que la corría (una
+ * verificación dura segundos). No se cierran las recientes: con varios procesos, otro puede estar
+ * verificando de verdad.
+ */
 export async function cerrarVerificacionesHuerfanas(): Promise<void> {
   await sequelize.query(
     `UPDATE verificaciones_integridad SET estado = 'fallida', error = 'El servidor se reinició en medio de la verificación. Volvé a pedirla.', terminada_el = now()
-     WHERE estado = 'en_curso'`,
+     WHERE estado = 'en_curso' AND iniciada_el < now() - interval '30 minutes'`,
   );
 }
 

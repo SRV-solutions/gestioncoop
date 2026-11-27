@@ -23,7 +23,8 @@ export const notificacionesPagoRouter = Router();
 const limite = (limit: number) =>
   rateLimit({
     windowMs: 15 * 60_000,
-    limit,
+    // Cada proceso lleva su cuenta: con varios, el límite se reparte para que el total sea el mismo.
+    limit: Math.ceil(limit / config.trabajadores),
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     skip: () => config.isTest,
